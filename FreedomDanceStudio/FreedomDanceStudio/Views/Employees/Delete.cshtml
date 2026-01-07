@@ -1,0 +1,18 @@
+@model Employee
+@{
+    ViewData["Title"] = "Удаление сотрудника";
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+    <p>Вы уверены, что хотите удалить сотрудника <strong>@Model.FirstName @Model.LastName</strong>?</p>
+
+    <form method="post" asp-action="Delete">
+        <input type="hidden" name="id" value="@Model.Id" />
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger">Удалить</button>
+            <a asp-action="Index" class="btn btn-secondary">Отмена</a>
+        </div>
+    </form>
+</div>

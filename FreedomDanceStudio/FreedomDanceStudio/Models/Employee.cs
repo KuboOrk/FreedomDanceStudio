@@ -16,11 +16,11 @@ public class Employee
     public string LastName { get; set; } = null!;
 
     [Phone]
-    string? Phone { get; set; }
+    public string? Phone { get; set; }
 
     [EmailAddress]
-    string? Email { get; set; }
+    public string? Email { get; set; }
 
     [Range(0, 999999.99)]
-    decimal Salary { get; set; }
+    public decimal Salary { get; set; }
 }
