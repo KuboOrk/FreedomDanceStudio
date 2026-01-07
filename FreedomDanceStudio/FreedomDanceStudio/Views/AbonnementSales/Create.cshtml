@@ -1,0 +1,83 @@
+@model AbonnementSale
+@{
+    ViewData["Title"] = "Продажа абонемента";
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+
+    <form method="post">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label asp-for="ClientId" class="form-label">Клиент</label>
+                    <select asp-for="ClientId" asp-items="ViewBag.Clients"
+                            class="form-select" required>
+                        <option value="">-- Выберите клиента --</option>
+                    </select>
+                    <span asp-validation-for="ClientId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ServiceId" class="form-label">Тип абонемента</label>
+                    <select asp-for="ServiceId" asp-items="ViewBag.Services"
+                            class="form-select" required>
+                        <option value="">-- Выберите услугу --</option>
+                    </select>
+                    <span asp-validation-for="ServiceId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="SaleDate" class="form-label">Дата продажи</label>
+                    <input asp-for="SaleDate" type="date" class="form-control"
+                           value="@DateTime.Today.ToString("yyyy-MM-dd")" readonly/>
+                    <span asp-validation-for="SaleDate" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Начало действия</label>
+                    <input type="text" class="form-control" readonly
+                           value="@DateTime.Today.ToString("dd.MM.yyyy")"/>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Окончание действия</label>
+                    <input type="text" class="form-control" readonly
+                           id="EndDateDisplay"/>
+                    <small class="text-muted">Рассчитывается автоматически</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Оформить продажу</button>
+                <a asp-action="Index" class="btn btn-secondary">Отмена</a>
+            </div>
+        </div>
+    </form>
+
+    @section Scripts {
+        <script>
+            // Динамический расчёт даты окончания при выборе услуги
+            document.querySelector('#ServiceId').addEventListener('change', function() {
+                const serviceId = this.value;
+                if (!serviceId) {
+                    document.getElementById('EndDateDisplay').value = '';
+                    return;
+                }
+
+                // Здесь можно сделать AJAX‑запрос к API для получения DurationDays
+                // Для простоты используем статические данные (в реальном проекте замените на AJAX)
+                const durationDays = {
+                    '1': 30, // ID услуги → срок в днях
+                    '2': 90,
+                    '3': 365
+                }[serviceId] || 0;
+
+                const startDate = new Date();
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + durationDays);
+
+                document.getElementById('EndDateDisplay').value =
+                    endDate.toLocaleDateString('ru-RU');
+            });
+        </script>
+    }
+</div>

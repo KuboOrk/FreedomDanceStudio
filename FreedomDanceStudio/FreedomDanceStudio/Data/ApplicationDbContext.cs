@@ -12,4 +12,11 @@ public class ApplicationDbContext: DbContext
     public DbSet<Client> Clients { get; set; }
     public DbSet<AbonnementSale> AbonnementSales { get; set; }
     public DbSet<SalaryCalculation> SalaryCalculations { get; set; }
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Не добавляйте конвертеры для DateTime, если тип столбца — date
+    }
 }

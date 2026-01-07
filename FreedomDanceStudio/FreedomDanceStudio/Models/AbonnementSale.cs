@@ -39,14 +39,16 @@ public class AbonnementSale
         /// <summary>
         /// Дата продажи абонемента
         /// </summary>
+        [Column(TypeName = "date")]
         [Display(Name = "Дата продажи")]
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
-        public DateTime SaleDate { get; set; } = DateTime.Now;
+        public DateTime SaleDate { get; set; } = DateTime.UtcNow.Date;
 
         /// <summary>
         /// Дата начала действия абонемента
         /// </summary>
+        [Column(TypeName = "date")]
         [Display(Name = "Начало действия")]
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}",ApplyFormatInEditMode = true)]
@@ -56,6 +58,7 @@ public class AbonnementSale
         /// <summary>
         /// Дата окончания действия абонемента (рассчитывается автоматически)
         /// </summary>
+        [Column(TypeName = "date")]
         [Display(Name = "Окончание действия")]
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}",ApplyFormatInEditMode = true)]
