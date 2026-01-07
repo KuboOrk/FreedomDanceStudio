@@ -3,14 +3,14 @@
 
     namespace FreedomDanceStudio.Models;
 
-    class SalaryCalculation
+    public class SalaryCalculation
     {
         /// <summary>
         /// Уникальный идентификатор расчёта
         /// </summary>
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        int Id { get; set; }
+        public int Id { get; set; }
 
         /// <summary>
         /// Ссылка на сотрудника (преподавателя)

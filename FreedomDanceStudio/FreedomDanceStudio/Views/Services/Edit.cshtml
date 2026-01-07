@@ -1,0 +1,49 @@
+@model FreedomDanceStudio.Models.Service
+@{
+    ViewData["Title"] = "Редактирование услуги";
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+
+    <form method="post" asp-action="Edit">
+        <!-- Скрытое поле для передачи Id при редактировании -->
+        <input type="hidden" asp-for="Id" />
+
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label">Название услуги</label>
+            <input asp-for="Name" class="form-control" placeholder="Введите название абонемента" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label">Описание</label>
+            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Подробное описание услуги"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Price" class="form-label">Цена (₽)</label>
+            <input asp-for="Price" class="form-control" type="number" step="0.01" placeholder="0.00" />
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="DurationDays" class="form-label">Срок действия (дни)</label>
+            <input asp-for="DurationDays" class="form-control" type="number" placeholder="Количество дней" />
+            <span asp-validation-for="DurationDays" class="text-danger"></span>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            <a asp-action="Index" class="btn btn-secondary">Отмена</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
