@@ -38,5 +38,5 @@ public class Client
     /// </summary>
     [EmailAddress(ErrorMessage = "Введите корректный email")]
     [Display(Name = "Email")]
-    string? Email { get; set; }
+    public string? Email { get; set; }
 }

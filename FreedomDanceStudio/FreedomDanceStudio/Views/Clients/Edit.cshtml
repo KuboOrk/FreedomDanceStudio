@@ -1,0 +1,52 @@
+@model Client
+@{
+    ViewData["Title"] = "Редактировать клиента";
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+
+    <!-- Форма с методом POST и защитой от CSRF-атак -->
+    <form method="post">
+        <!-- Скрытое поле для передачи Id клиента при сохранении -->
+        <input type="hidden" asp-for="Id"/>
+
+        <!-- Поле Имя -->
+        <div class="mb-3">
+            <label asp-for="FirstName" class="form-label">Имя</label>
+            <input asp-for="FirstName" class="form-control" placeholder="Введите имя"/>
+            <!-- Сообщение об ошибке валидации, если поле не заполнено или некорректно -->
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+
+        <!-- Поле Фамилия -->
+        <div class="mb-3">
+            <label asp-for="LastName" class="form-label">Фамилия</label>
+            <input asp-for="LastName" class="form-control" placeholder="Введите фамилию"/>
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
+
+        <!-- Поле Телефон -->
+        <div class="mb-3">
+            <label asp-for="Phone" class="form-label">Телефон</label>
+            <input asp-for="Phone" class="form-control" placeholder="+7 (999) 999-99-99"/>
+            <span asp-validation-for="Phone" class="text-danger"></span>
+        </div>
+
+        <!-- Поле Email (опционально) -->
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label">Email</label>
+            <input asp-for="Email" class="form-control" placeholder="client@example.com"/>
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <!-- Кнопки: сохранить и отмена -->
+        <div class="d-flex gap-2">
+            <!-- Кнопка «Сохранить» — отправляет форму на сервер -->
+            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+
+            <!-- Кнопка «Отмена» — возвращает на список клиентов -->
+            <a asp-action="Index" class="btn btn-secondary">Отмена</a>
+        </div>
+    </form>
+</div>
