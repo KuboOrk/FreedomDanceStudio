@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using FreedomDanceStudio.Attributes;
 
 namespace FreedomDanceStudio.Models;
 
@@ -39,6 +40,7 @@ public class AbonnementSale
         /// <summary>
         /// Дата продажи абонемента
         /// </summary>
+        [Required(ErrorMessage = "Дата продажи обязательна")]
         [Column(TypeName = "date")]
         [Display(Name = "Дата продажи")]
         [DataType(DataType.Date)]
@@ -63,5 +65,6 @@ public class AbonnementSale
         [DataType(DataType.Date)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}",ApplyFormatInEditMode = true)]
         [Required(ErrorMessage = "Дата окончания рассчитывается автоматически")]
+        [FutureDate(ErrorMessage = "Дата окончания не может быть в прошлом")]
         public DateTime EndDate { get; set; }
 }
