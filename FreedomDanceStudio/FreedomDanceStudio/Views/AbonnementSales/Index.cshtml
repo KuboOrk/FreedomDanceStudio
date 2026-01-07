@@ -1,35 +1,72 @@
 @model IEnumerable<AbonnementSale>
 @{
-    ViewData["Title"] = "Продажи абонементов";
+    ViewData["Title"] = "Список продаж абонементов";
 }
 
 <div class="container mt-4">
-    <h2>@ViewData["Title"]</h2>
-    <a asp-action="Create" class="btn btn-primary mb-3">Добавить продажу</a>
+    <!-- Сообщение об успехе (если есть) -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
 
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>@ViewData["Title"]</h2>
+        <a asp-action="Create" class="btn btn-primary">Новая продажа</a>
+    </div>
+
+    <!-- Таблица с продажами -->
     <table class="table table-striped table-hover">
-        <thead>
+        <thead class="table-dark">
         <tr>
+            <th>№</th>
             <th>Клиент</th>
-            <th>Абонемент</th>
+            <th>Услуга</th>
             <th>Дата продажи</th>
-            <th>Начало</th>
-            <th>Окончание</th>
-            <th></th>
+            <th>Начало действия</th>
+            <th>Окончание действия</th>
+            <th>Действия</th>
         </tr>
         </thead>
         <tbody>
-        @foreach (var sale in Model)
+        @foreach (var item in Model)
         {
             <tr>
-                <td>@sale.Client?.FirstName @sale.Client?.LastName</td>
-                <td>@sale.Service?.Name</td>
-                <td>@sale.SaleDate.ToShortDateString()</td>
-                <td>@sale.StartDate.ToShortDateString()</td>
-                <td>@sale.EndDate.ToShortDateString()</td>
+                <td>@item.Id</td>
                 <td>
-                    <!-- Здесь можно добавить кнопки редактирования/удаления -->
-                    <a asp-action="Edit" asp-route-id="@sale.Id" class="btn btn-sm btn-outline-primary">Редактировать</a>
+                    @if (item.Client != null)
+                    {
+                        @item.Client.FirstName @item.Client.LastName
+                    }
+                    else
+                    {
+                        <span class="text-muted">Клиент не найден</span>
+                    }
+                </td>
+                <td>
+                    @if (item.Service != null)
+                    {
+                        @item.Service.Name
+                    }
+                    else
+                    {
+                        <span class="text-muted">Услуга не найдена</span>
+                    }
+                </td>
+                <td>@item.SaleDate.ToString("dd.MM.yyyy")</td>
+                <td>@item.StartDate.ToString("dd.MM.yyyy")</td>
+                <td>@item.EndDate.ToString("dd.MM.yyyy")</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id"
+                       class="btn btn-sm btn-outline-primary">Редактировать</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id"
+                       class="btn btn-sm btn-outline-danger"
+                       onclick="return confirm('Удалить запись №@item.Id?')">
+                        Удалить
+                    </a>
                 </td>
             </tr>
         }

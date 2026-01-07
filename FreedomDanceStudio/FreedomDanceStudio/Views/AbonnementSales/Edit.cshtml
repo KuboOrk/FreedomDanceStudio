@@ -1,14 +1,19 @@
 @model AbonnementSale
 @{
-    ViewData["Title"] = "Продажа абонемента";
+    ViewData["Title"] = "Редактировать продажу абонемента";
 }
 
 <div class="container mt-4">
     <h2>@ViewData["Title"]</h2>
+    <p class="text-muted">Редактирование записи №@Model.Id</p>
 
     <form method="post">
+        <!-- Скрытое поле для Id записи -->
+        <input type="hidden" asp-for="Id"/>
+
         <div class="row">
             <div class="col-md-6">
+                <!-- Поле выбора клиента -->
                 <div class="mb-3">
                     <label asp-for="ClientId" class="form-label">Клиент</label>
                     <select asp-for="ClientId" asp-items="ViewBag.Clients"
@@ -18,6 +23,7 @@
                     <span asp-validation-for="ClientId" class="text-danger"></span>
                 </div>
 
+                <!-- Поле выбора услуги с AJAX‑пересчётом -->
                 <div class="mb-3">
                     <label asp-for="ServiceId" class="form-label">Тип абонемента</label>
                     <select asp-for="ServiceId" asp-items="ViewBag.Services"
@@ -27,35 +33,44 @@
                     <span asp-validation-for="ServiceId" class="text-danger"></span>
                 </div>
 
+                <!-- Дата продажи (только для чтения) -->
                 <div class="mb-3">
                     <label asp-for="SaleDate" class="form-label">Дата продажи</label>
                     <input asp-for="SaleDate" type="date" class="form-control"
-                           value="@DateTime.Today.ToString("yyyy-MM-dd")" readonly/>
+                           value="@Model.SaleDate.ToString("yyyy-MM-dd")" readonly/>
                     <span asp-validation-for="SaleDate" class="text-danger"></span>
                 </div>
 
-                <!-- Блок с информацией о выбранной услуге -->
+                <!-- Блок с информацией о выбранной услуге (появляется при выборе) -->
                 <div id="ServiceInfo" class="alert alert-info mb-3" style="display:none;">
                     <strong>Выбрана услуга:</strong> <span id="ServiceNameDisplay"></span><br>
                     <strong>Цена:</strong> <span id="PriceDisplay"></span> ₽<br>
                     <strong>Срок действия:</strong> <span id="DurationDisplay"></span> дней
                 </div>
 
+                <!-- Начало действия (только для чтения, всегда сегодня) -->
                 <div class="mb-3">
                     <label class="form-label">Начало действия</label>
                     <input type="text" class="form-control" readonly
-                           value="@DateTime.Today.ToString("dd.MM.yyyy")"/>
+                           value="@Model.StartDate.ToString("dd.MM.yyyy")"/>
                 </div>
 
+                <!-- Окончание действия (только для чтения, пересчитывается через AJAX) -->
                 <div class="mb-3">
                     <label class="form-label">Окончание действия</label>
                     <input type="text" class="form-control" readonly
-                           id="EndDateDisplay"/>
-                    <small class="text-muted">Рассчитывается автоматически</small>
+                           id="EndDateDisplay"
+                           value="@Model.EndDate.ToString("dd.MM.yyyy")"/>
+                    <small class="text-muted">Рассчитывается автоматически при выборе услуги</small>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Оформить продажу</button>
-                <a asp-action="Index" class="btn btn-secondary">Отмена</a>
+                <!-- Кнопки управления -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    <a asp-action="Index" class="btn btn-secondary">Отмена</a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id"
+                       class="btn btn-outline-danger">Удалить запись</a>
+                </div>
             </div>
         </div>
     </form>
@@ -82,8 +97,7 @@
                 }
 
                 try {
-                    // AJAX-запрос к нашему API-методу
-                    endDateDisplay.value = 'Загрузка...';
+                    // AJAX‑запрос к API для получения данных услуги
                     const response = await fetch(`/AbonnementSales/GetServiceDuration?serviceId=${serviceId}`);
 
                     if (!response.ok) {
@@ -98,12 +112,12 @@
                     durationDisplay.textContent = data.durationDays;
                     serviceInfo.style.display = 'block';
 
-                    // Рассчитываем дату окончания
+                    // Рассчитываем новую дату окончания
                     const startDate = new Date();
                     const endDate = new Date(startDate);
                     endDate.setDate(startDate.getDate() + data.durationDays);
 
-                    // Форматируем дату в читаемый вид (дд.мм.гггг)
+                    // Форматируем дату в русский формат (дд.мм.гггг)
                     const formattedDate = endDate.toLocaleDateString('ru-RU');
                     endDateDisplay.value = formattedDate;
                 } catch (error) {

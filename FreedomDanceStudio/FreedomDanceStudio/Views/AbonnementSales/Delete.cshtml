@@ -1,0 +1,53 @@
+@model AbonnementSale
+@{
+    ViewData["Title"] = "Удалить продажу абонемента";
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+    <p class="text-danger">Вы уверены, что хотите удалить эту запись?</p>
+
+    <div class="alert alert-warning">
+        <strong>Внимание!</strong> Это действие нельзя отменить.
+    </div>
+
+    <!-- Карточка с данными записи -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title">Запись №@Model.Id</h5>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Клиент:</dt>
+                <dd class="col-sm-9">@Model.Client?.FirstName @Model.Client?.LastName</dd>
+
+                <dt class="col-sm-3">Телефон:</dt>
+                <dd class="col-sm-9">@Model.Client?.Phone</dd>
+
+                <dt class="col-sm-3">Услуга:</dt>
+                <dd class="col-sm-9">@Model.Service?.Name</dd>
+
+                <dt class="col-sm-3">Цена:</dt>
+                <dd class="col-sm-9">@Model.Service?.Price ₽</dd>
+
+                <dt class="col-sm-3">Дата продажи:</dt>
+                <dd class="col-sm-9">@Model.SaleDate.ToString("dd.MM.yyyy")</dd>
+
+                <dt class="col-sm-3">Начало действия:</dt>
+                <dd class="col-sm-9">@Model.StartDate.ToString("dd.MM.yyyy")</dd>
+
+                <dt class="col-sm-3">Окончание действия:</dt>
+                <dd class="col-sm-9">@Model.EndDate.ToString("dd.MM.yyyy")</dd>
+            </dl>
+        </div>
+    </div>
+
+    <form method="post">
+        <input type="hidden" asp-for="Id"/>
+        <button type="submit" class="btn btn-danger"
+                onclick="return confirm('Вы уверены? Эта запись будет удалена навсегда!')">
+            Удалить навсегда
+        </button>
+        <a asp-action="Index" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
