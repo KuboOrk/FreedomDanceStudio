@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace FreedomDanceStudio.Controllers;
 
-public class AccountController: Controller
+public class AccountController : Controller
 {
     [HttpGet]
     public IActionResult Login()
@@ -17,6 +17,7 @@ public class AccountController: Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    #region Вход в систему
     public async Task<IActionResult> Login(string username, string password)
     {
         // В реальном приложении — проверка в БД
@@ -33,17 +34,46 @@ public class AccountController: Controller
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
+            TempData["Success"] = "Вы успешно вошли в систему.";
             return RedirectToAction("Index", "Home");
         }
 
         ViewData["Error"] = "Неверный логин или пароль";
         return View();
     }
+    #endregion
 
     [HttpPost]
-    public async Task<IActionResult> Logout()
+    [ValidateAntiForgeryToken]
+    #region Выход из системы
+    /// <summary>
+    /// Выполняет выход пользователя из системы.
+    /// </summary>
+    /// <param name="returnUrl">URL для перенаправления после выхода (если локальный)</param>
+    /// <returns>Перенаправление на главную или указанный URL</returns>
+    public async Task<IActionResult> Logout(string returnUrl = null)
     {
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        return RedirectToAction("Login");
+        // Проверяем, авторизован ли пользователь
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            // Очищаем все аутентификационные куки
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            //Очищаем сессию (если используется)
+            HttpContext.Session.Clear();
+
+            //Логируем выход (опционально)
+            //_logger.LogInformation("User {UserName} logged out.", User.Identity.Name);
+        }
+
+        //Безопасное перенаправление
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+
+        TempData["Success"] = "Вы успешно вышли из системы.";
+        return RedirectToAction("Index", "Home");
     }
+    #endregion
 }

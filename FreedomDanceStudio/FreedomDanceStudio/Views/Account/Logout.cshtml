@@ -1,0 +1,21 @@
+@{
+    ViewData["Title"] = "Выход";
+}
+
+<div class="container mt-5">
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <h3 class="card-title">Вы уверены, что хотите выйти?</h3>
+                <form asp-action="Logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+                    <button type="submit" class="btn btn-danger btn-lg mt-3">Да, выйти</button>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-secondary btn-lg mt-3">Отмена</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
