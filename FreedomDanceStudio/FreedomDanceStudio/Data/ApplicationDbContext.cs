@@ -7,9 +7,9 @@ public class ApplicationDbContext: DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
-    DbSet<Service> Services { get; set; }
-    DbSet<Employee> Employees { get; set; }
-    DbSet<Client> Clients { get; set; }
-    DbSet<AbonnementSale> AbonnementSales { get; set; }
-    DbSet<SalaryCalculation> SalaryCalculations { get; set; }
+    public DbSet<Service> Services { get; set; }
+    public DbSet<Employee> Employees { get; set; }
+    public DbSet<Client> Clients { get; set; }
+    public DbSet<AbonnementSale> AbonnementSales { get; set; }
+    public DbSet<SalaryCalculation> SalaryCalculations { get; set; }
 }
