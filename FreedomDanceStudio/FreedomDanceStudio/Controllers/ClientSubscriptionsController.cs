@@ -66,6 +66,19 @@
                     .ToList();
                 return View(subscription);
             }
+            
+            // AJAX: /ClientSubscriptions/CalculateEndDate
+            [HttpGet]
+            public JsonResult CalculateEndDate(int serviceId, DateTime startDate)
+            {
+                var service = _context.Services.Find(serviceId);
+                if (service != null)
+                {
+                    var endDate = startDate.AddDays(service.DurationDays);
+                    return Json(new { endDate = endDate.ToString("dd.MM.yyyy") });
+                }
+                return Json(null);
+            }
 
             // GET: /ClientSubscriptions/Edit/5 — форма редактирования
             public async Task<IActionResult> Edit(int id)

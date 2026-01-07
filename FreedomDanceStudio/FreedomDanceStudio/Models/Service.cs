@@ -14,7 +14,7 @@ public class Service
 
     [Required]
     [Range(0, 100000)]
-   decimal Price { get; set; } // Цена
+    public decimal Price { get; set; } // Цена
 
     [Required]
     public int DurationDays { get; set; } // Срок действия в днях

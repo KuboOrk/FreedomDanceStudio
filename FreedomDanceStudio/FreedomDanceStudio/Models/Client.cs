@@ -19,7 +19,6 @@ public class Client
     [Phone]
     public string Phone { get; set; }
     [EmailAddress]
-    public string Email { get; set; }
     public DateTime RegistrationDate { get; set; } = DateTime.Now;
     public bool IsActive { get; set; } = true;
 }
