@@ -17,7 +17,7 @@ public class Service
    decimal Price { get; set; } // Цена
 
     [Required]
-    int DurationDays { get; set; } // Срок действия в днях
+    public int DurationDays { get; set; } // Срок действия в днях
 
-    bool IsActive { get; set; } = true; // Активен ли абонемент
+    public bool IsActive { get; set; } = true; // Активен ли абонемент
 }
