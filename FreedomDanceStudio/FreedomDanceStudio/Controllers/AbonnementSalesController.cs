@@ -29,6 +29,7 @@ public class AbonnementSalesController: Controller
         var sales = _context.AbonnementSales
             .Include(s => s.Client)
             .Include(s => s.Service)
+            .Include((s =>s.Visits))
             .ToList();
         return View(sales);
     }
@@ -40,7 +41,13 @@ public class AbonnementSalesController: Controller
     #region Форма создания новой продажи абонемента
     public IActionResult Create()
     {
-        // Заполняем выпадающие списки для выбора клиента и услуги
+        // Инициализируем модель с текущей датой по умолчанию
+        var newSale = new AbonnementSale
+        {
+            StartDate = DateTime.UtcNow.Date // Текущая дата по умолчанию
+        };
+
+        // Заполняем выпадающие списки
         ViewBag.Clients = _context.Clients
             .Select(client => new SelectListItem
             {
@@ -57,7 +64,7 @@ public class AbonnementSalesController: Controller
             })
             .ToList();
 
-        return View();
+        return View(newSale);
     }
     #endregion
 
@@ -66,7 +73,7 @@ public class AbonnementSalesController: Controller
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin")]
     #region Обработка отправки формы продажи абонемента
-    public async Task<IActionResult> Create(AbonnementSale sale)
+    public async Task<IActionResult> Create([Bind("Id,ClientId,ServiceId,SaleDate,StartDate,EndDate,MaxVisits")] AbonnementSale sale)
     {
         if (ModelState.IsValid)
         {
@@ -77,13 +84,24 @@ public class AbonnementSalesController: Controller
                 return View(await ReloadViewData(sale));
             }
 
-            // Явно устанавливаем даты на основе логики приложения
-            sale.StartDate = DateTime.UtcNow.Date;
+            // Валидация MaxVisits
+            if (sale.MaxVisits < 0)
+            {
+                ModelState.AddModelError("MaxVisits", "Количество посещений не может быть отрицательным");
+                return View(await ReloadViewData(sale));
+            }
+
+            // Берём StartDate из модели или используем текущую дату
+            sale.StartDate = sale.StartDate == default ? DateTime.UtcNow.Date : sale.StartDate;
+
+            // Пересчитываем EndDate после всех проверок
             sale.EndDate = sale.StartDate.AddDays(service.DurationDays);
+
+            // SaleDate всегда текущая дата
             sale.SaleDate = DateTime.UtcNow.Date;
 
             _context.AbonnementSales.Add(sale);
-        
+
             try
             {
                 await _context.SaveChangesAsync();
@@ -96,13 +114,20 @@ public class AbonnementSalesController: Controller
             }
         }
 
-        // Если ModelState невалиден — перезагружаем списки и возвращаем форму с ошибками
+        // Если ModelState невалиден — возвращаем форму с ошибками
         return View(await ReloadViewData(sale));
     }
     #endregion
     
     private async Task<AbonnementSale> ReloadViewData(AbonnementSale sale)
     {
+        if (sale == null)
+            sale = new AbonnementSale();
+
+        // Явно инициализируем StartDate, если он не задан
+        if (sale.StartDate == default)
+            sale.StartDate = DateTime.UtcNow.Date;
+
         ViewBag.Clients = await _context.Clients
             .Select(client => new SelectListItem
             {
@@ -152,10 +177,19 @@ public class AbonnementSalesController: Controller
         var sale = await _context.AbonnementSales
             .Include(s => s.Client)
             .Include(s => s.Service)
+            .Include(s => s.Visits) // ВАЖНО: загружаем посещения для проверки лимита
             .FirstOrDefaultAsync(s => s.Id == id);
 
         if (sale == null)
             return NotFound();
+
+        // ПРОВЕРКА: если лимит посещений исчерпан, запрещаем редактирование
+        if (sale.MaxVisits > 0 && sale.Visits.Count >= sale.MaxVisits)
+        {
+            TempData["EditError"] = "Редактирование запрещено: лимит посещений исчерпан.";
+            _logger.LogWarning("Попытка редактирования абонемента ID {Id} с исчерпанным лимитом посещений", id);
+            return RedirectToAction(nameof(Index));
+        }
 
         // Заполняем списки для выбора
         ViewBag.Clients = _context.Clients.Select(c => new SelectListItem
@@ -194,20 +228,30 @@ if (id != sale.Id)
             if (existingSale == null)
                 return NotFound();
 
+            // Валидация MaxVisits
+            if (sale.MaxVisits < 0)
+            {
+                ModelState.AddModelError("MaxVisits", "Количество посещений не может быть отрицательным");
+                return View(await ReloadViewData(sale));
+            }
+
+
             // Сохраняем неизменные поля
             existingSale.ClientId = sale.ClientId;
             existingSale.ServiceId = sale.ServiceId;
-            existingSale.SaleDate = sale.SaleDate;
+            existingSale.MaxVisits = sale.MaxVisits;
 
             var entry = _context.Entry(existingSale);
 
-            // Если услуга изменилась — пересчитываем EndDate на основе исходного StartDate
+            // Если услуга изменилась — пересчитываем EndDate на основе StartDate из модели
             if (entry.Property(e => e.ServiceId).IsModified)
             {
                 var service = await _context.Services.FindAsync(sale.ServiceId);
                 if (service != null)
                 {
-                    // Сохраняем исходный StartDate, пересчитываем EndDate
+                    // Берём StartDate из модели (может быть изменён пользователем)
+                    existingSale.StartDate = sale.StartDate;
+                    // Пересчитываем EndDate
                     existingSale.EndDate = existingSale.StartDate.AddDays(service.DurationDays);
                 }
                 else
@@ -218,7 +262,7 @@ if (id != sale.Id)
             }
             else
             {
-                // Если услуга не менялась, сохраняем старые даты
+                // Если услуга не менялась, сохраняем даты из модели
                 existingSale.StartDate = sale.StartDate;
                 existingSale.EndDate = sale.EndDate;
             }

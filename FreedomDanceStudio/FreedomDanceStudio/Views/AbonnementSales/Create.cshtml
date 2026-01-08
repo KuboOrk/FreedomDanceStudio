@@ -1,12 +1,14 @@
 @model AbonnementSale
 @{
-    ViewData["Title"] = "Продажа абонемента";
+    ViewData["Title"] = "Создание продажи абонемента";
 }
 
 <div class="container mt-4">
     <h2>@ViewData["Title"]</h2>
 
     <form method="post">
+        <input type="hidden" asp-for="Id" />
+
         <div class="row">
             <div class="col-md-6">
                 <!-- Поле выбора клиента -->
@@ -29,13 +31,19 @@
                     <span asp-validation-for="ServiceId" class="text-danger"></span>
                 </div>
 
-                <!-- Дата продажи (фиксирована на сегодня) -->
+                <!-- Дата продажи (только для чтения) -->
                 <div class="mb-3">
                     <label asp-for="SaleDate" class="form-label">Дата продажи</label>
                     <input asp-for="SaleDate" type="date" class="form-control"
-                           asp-format="{0:yyyy-MM-dd}"
-                           value="@DateTime.UtcNow.Date.ToString("yyyy-MM-dd")" readonly/>
+                           readonly />
                     <span asp-validation-for="SaleDate" class="text-danger"></span>
+                </div>
+
+                <!-- Начало действия -->
+                <div class="mb-3">
+                    <label asp-for="StartDate" class="form-label">Начало действия</label>
+                    <input asp-for="StartDate" type="date" class="form-control" required />
+                    <span asp-validation-for="StartDate" class="text-danger"></span>
                 </div>
 
                 <!-- Блок с информацией о выбранной услуге -->
@@ -45,30 +53,26 @@
                     <strong>Срок действия:</strong> <span id="DurationDisplay"></span> дней
                 </div>
 
-                <!-- Начало действия (фиксировано на сегодня) -->
-                <div class="mb-3">
-                    <label class="form-label">Начало действия</label>
-                    <input type="text" class="form-control" readonly
-                           value="@DateTime.UtcNow.Date.ToString("dd.MM.yyyy")"/>
-                    <!-- Скрытое поле для передачи StartDate в контроллер -->
-                    <input asp-for="StartDate" type="hidden"
-                           value="@DateTime.UtcNow.Date.ToString("yyyy-MM-dd")"/>
-                </div>
-
-                <!-- Окончание действия (рассчитывается автоматически) -->
+                <!-- Окончание действия (только для чтения, пересчитывается автоматически) -->
                 <div class="mb-3">
                     <label class="form-label">Окончание действия</label>
-                    <!-- Видимое поле для пользователя (формат дд.мм.гггг) -->
-                    <input type="text" class="form-control" readonly
-                           id="EndDateDisplay"
-                           placeholder="Выберите услугу для расчёта"/>
-                    <!-- Скрытое поле для передачи EndDate в контроллер (формат yyyy-MM-dd) -->
-                    <input asp-for="EndDate" type="hidden" id="EndDateHidden"/>
-                    <small class="text-muted">Рассчитывается автоматически при выборе услуги</small>
+                    <input type="date" class="form-control" readonly
+                           id="EndDateDisplay" />
+                    <!-- Скрытое поле для передачи в контроллер -->
+                    <input asp-for="EndDate" type="hidden" id="EndDateHidden" />
+                    <small class="text-muted">Пересчитывается автоматически при смене услуги или даты начала</small>
                     <span asp-validation-for="EndDate" class="text-danger"></span>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Оформить продажу</button>
+                <!-- Максимальное количество посещений -->
+                <div class="mb-3">
+                    <label asp-for="MaxVisits" class="form-label">Максимальное количество посещений</label>
+                    <input asp-for="MaxVisits" class="form-control" type="number" min="0" />
+                    <small class="text-muted">0 — безлимит</small>
+                    <span asp-validation-for="MaxVisits" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Сохранить</button>
                 <a asp-action="Index" class="btn btn-secondary">Отмена</a>
             </div>
         </div>
@@ -78,7 +82,9 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Безопасное получение элементов
             const serviceSelect = document.getElementById('ServiceSelect');
+            const startDateInput = document.getElementById('StartDate');
             const endDateDisplay = document.getElementById('EndDateDisplay');
             const endDateHidden = document.getElementById('EndDateHidden');
             const serviceInfo = document.getElementById('ServiceInfo');
@@ -86,51 +92,71 @@
             const priceDisplay = document.getElementById('PriceDisplay');
             const durationDisplay = document.getElementById('DurationDisplay');
 
-            serviceSelect.addEventListener('change', async function() {
-                const serviceId = this.value;
+            // Проверка, что все элементы найдены
+            if (!serviceSelect || !startDateInput || !endDateDisplay || !endDateHidden) {
+                console.error('Не найдены обязательные элементы формы');
+                return;
+            }
 
-                if (!serviceId) {
-                    serviceInfo.style.display = 'none';
+            function recalculateEndDate() {
+                const startDateStr = startDateInput.value;
+                const serviceId = serviceSelect.value;
+
+                // Если нет данных, очищаем EndDate
+                if (!startDateStr || !serviceId) {
                     endDateDisplay.value = '';
                     endDateHidden.value = '';
+                    if (serviceInfo) serviceInfo.style.display = 'none';
                     return;
                 }
 
-                try {
-                    const response = await fetch(`/AbonnementSales/GetServiceDuration?serviceId=${serviceId}`);
-                    if (!response.ok) throw new Error('Ошибка сети');
+                const url = `${window.location.origin}/AbonnementSales/GetServiceDuration?serviceId=${serviceId}`;
+
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const startDate = new Date(startDateStr);
+                        const newEndDate = new Date(startDate);
+                        newEndDate.setDate(startDate.getDate() + data.durationDays);
+
+                        // Форматируем в ISO для скрытого поля
+                        const isoEndDate = newEndDate.toISOString().split('T')[0];
+                        endDateDisplay.value = isoEndDate;
+                        endDateHidden.value = isoEndDate;
+
+                        // Обновляем информацию об услуге
+                        if (serviceNameDisplay) serviceNameDisplay.textContent = data.serviceName;
+                        if (priceDisplay) priceDisplay.textContent = data.price;
+                        if (durationDisplay) durationDisplay.textContent = data.durationDays;
+                        if (serviceInfo) serviceInfo.style.display = 'block';
+                    })
+                    .catch(error => {
+                        console.error('Ошибка при получении данных:', error);
+                        alert(`Не удалось загрузить данные услуги: ${error.message}. Проверьте подключение к сети.`);
+
+                        // При ошибке очищаем EndDate
+                        endDateDisplay.value = '';
+                        endDateHidden.value = '';
+                        if (serviceInfo) serviceInfo.style.display = 'none';
+                    });
+            }
 
 
-                    const data = await response.json();
+            // Обработчики событий
+            if (serviceSelect) serviceSelect.addEventListener('change', recalculateEndDate);
+            if (startDateInput) startDateInput.addEventListener('change', recalculateEndDate);
 
-                    // Заполняем информацию об услуге
-                    serviceNameDisplay.textContent = data.serviceName;
-                    priceDisplay.textContent = data.price;
-                    durationDisplay.textContent = data.durationDays;
-                    serviceInfo.style.display = 'block';
-
-
-                    // Рассчитываем дату окончания в ISO‑формате (yyyy-MM-dd)
-                    const startDate = new Date('@DateTime.UtcNow.Date.ToString("yyyy-MM-dd")');
-                    const endDate = new Date(startDate);
-                    endDate.setDate(startDate.getDate() + data.durationDays);
-
-                    // Форматируем для отображения (дд.мм.гггг)
-                    const day = String(endDate.getDate()).padStart(2, '0');
-                    const month = String(endDate.getMonth() + 1).padStart(2, '0');
-                    const year = endDate.getFullYear();
-                    endDateDisplay.value = `${day}.${month}.${year}`;
-
-
-                    // Устанавливаем скрытое поле в ISO‑формате для отправки в контроллер
-                    endDateHidden.value = endDate.toISOString().split('T')[0];
-                } catch (error) {
-                    console.error('Ошибка при получении данных:', error);
-                    alert('Не удалось загрузить данные услуги. Проверьте подключение к сети.');
-                    endDateDisplay.value = 'Ошибка загрузки';
-                    serviceInfo.style.display = 'none';
-                }
-            });
-        });
+            // Инициализация при загрузке (если элементы найдены и есть выбор)
+            if (serviceSelect && startDateInput && serviceSelect.value && startDateInput.value) {
+                recalculateEndDate();
+            }
+});
     </script>
 }
+
+

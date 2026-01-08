@@ -67,4 +67,11 @@ public class AbonnementSale
         [Required(ErrorMessage = "Дата окончания рассчитывается автоматически")]
         [FutureDate(ErrorMessage = "Дата окончания не может быть в прошлом")]
         public DateTime EndDate { get; set; }
+        
+        public virtual ICollection<ClientVisit> Visits { get; set; } = new List<ClientVisit>();
+        /// <summary>
+        /// Максимальное количество посещений по абонементу
+        /// </summary>
+        [Display(Name = "Макс. посещений")]
+        public int MaxVisits { get; set; } = 0;
 }
