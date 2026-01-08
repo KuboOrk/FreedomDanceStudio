@@ -198,87 +198,87 @@
                 if (maxVisits > 0 && visitCount >= maxVisits) {
                     btn.disabled = true;
                     btn.textContent = 'Исчерпано';
-            btn.classList.remove('btn-outline-success', 'btn-success');
-            btn.classList.add('btn-danger');
-            btn.title = 'Лимит посещений исчерпан';
-        } else {
-            btn.disabled = false;
-            btn.textContent = 'Отметить';
-            btn.classList.remove('btn-danger', 'btn-success');
-            btn.classList.add('btn-outline-success');
-            btn.title = 'Отметить посещение клиента';
+                    btn.classList.remove('btn-outline-success', 'btn-success');
+                    btn.classList.add('btn-danger');
+                    btn.title = 'Лимит посещений исчерпан';
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Отметить';
+                    btn.classList.remove('btn-danger', 'btn-success');
+                    btn.classList.add('btn-outline-success');
+                    btn.title = 'Отметить посещение клиента';
+                }
+            });
         }
-    });
-}
-// Обработчики для кнопок «Отметить посещение»
-document.querySelectorAll('.mark-visit-btn').forEach(btn => {
-    btn.addEventListener('click', async function () {
-        const abonnementId = this.getAttribute('data-abonnement-id');
-        const row = this.closest('tr');
-        const visitCountEl = row.querySelector('.badge');
-        const maxVisits = parseInt(row.getAttribute('data-max-visits')) || 0;
+        // Обработчики для кнопок «Отметить посещение»
+        document.querySelectorAll('.mark-visit-btn').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const abonnementId = this.getAttribute('data-abonnement-id');
+                const row = this.closest('tr');
+                const visitCountEl = row.querySelector('.badge');
+                const maxVisits = parseInt(row.getAttribute('data-max-visits')) || 0;
 
-        try {
-            const response = await fetch('/ClientVisits/MarkVisit', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-        },
-        body: `abonnementSaleId=${abonnementId}`
-    });
+                try {
+                    const response = await fetch('/ClientVisits/MarkVisit', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: `abonnementSaleId=${abonnementId}`
+                    });
 
-    if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-            // Обновляем счётчик
-            visitCountEl.textContent = result.visitCount;
-            row.setAttribute('data-visit-count', result.visitCount);
-            refreshVisitButtons(); // Переинициализация кнопок
-            showToast('Успех', result.message, 'success');
-        } else {
-            // Ошибка от сервера (лимит исчерпан)
-            visitCountEl.textContent = result.visitCount;
-            row.setAttribute('data-visit-count', result.visitCount);
-            refreshVisitButtons();
-            showToast('Ошибка', result.message, 'danger');
-        }
-    } else {
-        showToast('Ошибка сервера', 'HTTP ' + response.status, 'danger');
-    }
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success) {
+                            // Обновляем счётчик
+                            visitCountEl.textContent = result.visitCount;
+                            row.setAttribute('data-visit-count', result.visitCount);
+                            refreshVisitButtons(); // Переинициализация кнопок
+                            showToast('Успех', result.message, 'success');
+                        } else {
+                            // Ошибка от сервера (лимит исчерпан)
+                            visitCountEl.textContent = result.visitCount;
+                            row.setAttribute('data-visit-count', result.visitCount);
+                            refreshVisitButtons();
+                            showToast('Ошибка', result.message, 'danger');
+                        }
+                    } else {
+                        showToast('Ошибка сервера', 'HTTP ' + response.status, 'danger');
+                    }
 } catch (error) {
-    console.error('Ошибка при отметке посещения (ID: ' + abonnementId + '):', error);
-    showToast('Ошибка', 'Не удалось отметить посещение. Проверьте консоль (F12).', 'danger');
-}
+                    console.error('Ошибка при отметке посещения (ID: ' + abonnementId + '):', error);
+                    showToast('Ошибка', 'Не удалось отметить посещение. Проверьте консоль (F12).', 'danger');
+                }
 });
-});
+        });
 
-// --- ОБРАБОТЧИК ДЛЯ КНОПКИ «ИСТОРИЯ ПОСЕЩЕНИЙ» ---
-document.querySelectorAll('.view-history-btn').forEach(btn => {
-    btn.addEventListener('click', async function () {
-        const abonnementId = this.getAttribute('data-abonnement-id');
+        // --- ОБРАБОТЧИК ДЛЯ КНОПКИ «ИСТОРИЯ ПОСЕЩЕНИЙ» ---
+        document.querySelectorAll('.view-history-btn').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const abonnementId = this.getAttribute('data-abonnement-id');
 
-        try {
-            // Отправляем запрос на сервер за историей посещений
-            const response = await fetch(`/ClientVisits/GetVisitHistory?abonnementSaleId=${abonnementId}`);
+                try {
+                    // Отправляем запрос на сервер за историей посещений
+                    const response = await fetch(`/ClientVisits/GetVisitHistory?abonnementSaleId=${abonnementId}`);
 
-            if (response.ok) {
-                const history = await response.json();
-                showVisitHistoryModal(history, abonnementId);
-            } else {
-                showToast('Ошибка загрузки', 'HTTP ' + response.status, 'danger');
-            }
-        } catch (error) {
-            console.error('Ошибка при загрузке истории посещений (ID: ' + abonnementId + '):', error);
-            showToast('Ошибка', 'Не удалось загрузить историю посещений.', 'danger');
-        }
-    });
-});
+                    if (response.ok) {
+                        const history = await response.json();
+                        showVisitHistoryModal(history, abonnementId);
+                    } else {
+                        showToast('Ошибка загрузки', 'HTTP ' + response.status, 'danger');
+                    }
+                } catch (error) {
+                    console.error('Ошибка при загрузке истории посещений (ID: ' + abonnementId + '):', error);
+                    showToast('Ошибка', 'Не удалось загрузить историю посещений.', 'danger');
+                }
+            });
+        });
 
-// Функция отображения модального окна с историей посещений
-function showVisitHistoryModal(history, abonnementId) {
-    // Создаём модальное окно динамически
-    const modalHtml = `
+        // Функция отображения модального окна с историей посещений
+        function showVisitHistoryModal(history, abonnementId) {
+            // Создаём модальное окно динамически
+            const modalHtml = `
 <div class="modal fade" id="visitHistoryModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -288,7 +288,7 @@ function showVisitHistoryModal(history, abonnementId) {
             </div>
             <div class="modal-body">
                 ${history.length > 0
-                    ? `<table class="table table-striped">
+                ? `<table class="table table-striped">
                         <thead>
                             <tr>
                                 <th>Дата посещения</th>
@@ -301,8 +301,8 @@ function showVisitHistoryModal(history, abonnementId) {
             </tr>`).join('')}
         </tbody>
     </table>`
-            : '<p class="text-muted">Посещения не найдены</p>'
-        }
+                : '<p class="text-muted">Посещения не найдены</p>'
+            }
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
@@ -311,18 +311,18 @@ function showVisitHistoryModal(history, abonnementId) {
     </div>
 </div>`;
 
-    // Вставляем модальное окно в DOM
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
+            // Вставляем модальное окно в DOM
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-    // Инициализируем и показываем модальное окно (Bootstrap 5)
-    const modal = new bootstrap.Modal(document.getElementById('visitHistoryModal'));
-    modal.show();
+            // Инициализируем и показываем модальное окно (Bootstrap 5)
+            const modal = new bootstrap.Modal(document.getElementById('visitHistoryModal'));
+            modal.show();
 
-    // Удаляем модальное окно из DOM после закрытия
-    document.getElementById('visitHistoryModal').addEventListener('hidden.bs.modal', function () {
-        this.remove();
-    });
-}
+            // Удаляем модальное окно из DOM после закрытия
+            document.getElementById('visitHistoryModal').addEventListener('hidden.bs.modal', function () {
+                this.remove();
+            });
+        }
 
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function () {
