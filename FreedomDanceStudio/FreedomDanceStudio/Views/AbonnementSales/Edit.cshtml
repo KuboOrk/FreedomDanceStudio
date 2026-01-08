@@ -1,15 +1,13 @@
 @model AbonnementSale
 @{
-    ViewData["Title"] = "Редактировать продажу абонемента";
+    ViewData["Title"] = "Редактирование продажи абонемента";
 }
 
 <div class="container mt-4">
     <h2>@ViewData["Title"]</h2>
-    <p class="text-muted">Редактирование записи №@Model.Id</p>
 
     <form method="post">
-        <!-- Скрытое поле для Id записи -->
-        <input type="hidden" asp-for="Id"/>
+        <input type="hidden" asp-for="Id" />
 
         <div class="row">
             <div class="col-md-6">
@@ -23,7 +21,7 @@
                     <span asp-validation-for="ClientId" class="text-danger"></span>
                 </div>
 
-                <!-- Поле выбора услуги с AJAX‑пересчётом -->
+                <!-- Поле выбора услуги -->
                 <div class="mb-3">
                     <label asp-for="ServiceId" class="form-label">Тип абонемента</label>
                     <select asp-for="ServiceId" asp-items="ViewBag.Services"
@@ -37,40 +35,44 @@
                 <div class="mb-3">
                     <label asp-for="SaleDate" class="form-label">Дата продажи</label>
                     <input asp-for="SaleDate" type="date" class="form-control"
+                           asp-format="{0:yyyy-MM-dd}"
                            value="@Model.SaleDate.ToString("yyyy-MM-dd")" readonly/>
                     <span asp-validation-for="SaleDate" class="text-danger"></span>
                 </div>
 
-                <!-- Блок с информацией о выбранной услуге (появляется при выборе) -->
+                <!-- Блок с информацией о выбранной услуге -->
                 <div id="ServiceInfo" class="alert alert-info mb-3" style="display:none;">
                     <strong>Выбрана услуга:</strong> <span id="ServiceNameDisplay"></span><br>
-                    <strong>Цена:</strong> <span id="PriceDisplay"></span> ₽<br>
+                    <strong>Цена:</strong> <span id="PriceDisplay"></span> ₽<br>
                     <strong>Срок действия:</strong> <span id="DurationDisplay"></span> дней
                 </div>
 
-                <!-- Начало действия (только для чтения, всегда сегодня) -->
+                <!-- Начало действия (только для чтения, сохраняется исходное значение) -->
                 <div class="mb-3">
                     <label class="form-label">Начало действия</label>
                     <input type="text" class="form-control" readonly
                            value="@Model.StartDate.ToString("dd.MM.yyyy")"/>
+                    <!-- Скрытое поле для передачи StartDate в контроллер -->
+                    <input asp-for="StartDate" type="hidden"
+                           value="@Model.StartDate.ToString("yyyy-MM-dd")"/>
                 </div>
 
-                <!-- Окончание действия (только для чтения, пересчитывается через AJAX) -->
+                <!-- Окончание действия -->
                 <div class="mb-3">
                     <label class="form-label">Окончание действия</label>
+                    <!-- Видимое поле для пользователя -->
                     <input type="text" class="form-control" readonly
                            id="EndDateDisplay"
                            value="@Model.EndDate.ToString("dd.MM.yyyy")"/>
-                    <small class="text-muted">Рассчитывается автоматически при выборе услуги</small>
+                    <!-- Скрытое поле для передачи EndDate в контролер -->
+                    <input asp-for="EndDate" type="hidden" id="EndDateHidden"
+                           value="@Model.EndDate.ToString("yyyy-MM-dd")"/>
+                    <small class="text-muted">Пересчитывается автоматически при смене услуги</small>
+                    <span asp-validation-for="EndDate" class="text-danger"></span>
                 </div>
 
-                <!-- Кнопки управления -->
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
-                    <a asp-action="Index" class="btn btn-secondary">Отмена</a>
-                    <a asp-action="Delete" asp-route-id="@Model.Id"
-                       class="btn btn-outline-danger">Удалить запись</a>
-                </div>
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                <a asp-action="Index" class="btn btn-secondary">Отмена</a>
             </div>
         </div>
     </form>
@@ -81,28 +83,29 @@
         document.addEventListener('DOMContentLoaded', function() {
             const serviceSelect = document.getElementById('ServiceSelect');
             const endDateDisplay = document.getElementById('EndDateDisplay');
+            const endDateHidden = document.getElementById('EndDateHidden');
             const serviceInfo = document.getElementById('ServiceInfo');
             const serviceNameDisplay = document.getElementById('ServiceNameDisplay');
             const priceDisplay = document.getElementById('PriceDisplay');
             const durationDisplay = document.getElementById('DurationDisplay');
 
+            // Исходные даты из модели
+            const originalStartDate = new Date('@Model.StartDate.ToString("yyyy-MM-dd")');
+            const originalEndDate = new Date('@Model.EndDate.ToString("yyyy-MM-dd")');
+
             serviceSelect.addEventListener('change', async function() {
                 const serviceId = this.value;
 
                 if (!serviceId) {
-                    // Скрываем информацию, если услуга не выбрана
                     serviceInfo.style.display = 'none';
-                    endDateDisplay.value = '';
+                    endDateDisplay.value = originalEndDate.toLocaleDateString('ru-RU');
+                    endDateHidden.value = '@Model.EndDate.ToString("yyyy-MM-dd")';
                     return;
                 }
 
                 try {
-                    // AJAX‑запрос к API для получения данных услуги
                     const response = await fetch(`/AbonnementSales/GetServiceDuration?serviceId=${serviceId}`);
-
-                    if (!response.ok) {
-                        throw new Error('Ошибка сети');
-                    }
+                    if (!response.ok) throw new Error('Ошибка сети');
 
                     const data = await response.json();
 
@@ -112,21 +115,31 @@
                     durationDisplay.textContent = data.durationDays;
                     serviceInfo.style.display = 'block';
 
-                    // Рассчитываем новую дату окончания
-                    const startDate = new Date();
-                    const endDate = new Date(startDate);
-                    endDate.setDate(startDate.getDate() + data.durationDays);
+                    // Пересчитываем дату окончания на основе исходного StartDate
+                    const newEndDate = new Date(originalStartDate);
+                    newEndDate.setDate(originalStartDate.getDate() + data.durationDays);
 
-                    // Форматируем дату в русский формат (дд.мм.гггг)
-                    const formattedDate = endDate.toLocaleDateString('ru-RU');
-                    endDateDisplay.value = formattedDate;
+                    // Форматируем для отображения (дд.мм.гггг)
+                    const day = String(newEndDate.getDate()).padStart(2, '0');
+                    const month = String(newEndDate.getMonth() + 1).padStart(2, '0');
+                    const year = newEndDate.getFullYear();
+                    endDateDisplay.value = `${day}.${month}.${year}`;
+
+                    // Устанавливаем скрытое поле в ISO‑формате
+                    endDateHidden.value = newEndDate.toISOString().split('T')[0];
                 } catch (error) {
                     console.error('Ошибка при получении данных:', error);
                     alert('Не удалось загрузить данные услуги. Проверьте подключение к сети.');
-                    endDateDisplay.value = '';
+                    // Возвращаем исходную дату при ошибке
+                    endDateDisplay.value = originalEndDate.toLocaleDateString('ru-RU');
                     serviceInfo.style.display = 'none';
                 }
             });
-        });
+
+            // Инициализация при загрузке (если уже выбрана услуга)
+            if (serviceSelect.value) {
+                serviceSelect.dispatchEvent(new Event('change'));
+            }
+});
     </script>
 }

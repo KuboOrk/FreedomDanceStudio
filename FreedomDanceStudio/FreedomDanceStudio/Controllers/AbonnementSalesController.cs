@@ -11,11 +11,13 @@ namespace FreedomDanceStudio.Controllers;
 public class AbonnementSalesController: Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<AbonnementSalesController> _logger;
 
     #region Конструктор
-    public AbonnementSalesController(ApplicationDbContext context)
+    public AbonnementSalesController(ApplicationDbContext context,ILogger<AbonnementSalesController> logger)
     {
         _context = context;
+        _logger = logger;
     }
     #endregion
 
@@ -68,45 +70,57 @@ public class AbonnementSalesController: Controller
     {
         if (ModelState.IsValid)
         {
-            // Получаем выбранную услугу для расчёта срока действия
             var service = await _context.Services.FindAsync(sale.ServiceId);
             if (service == null)
             {
-                ModelState.AddModelError("", "Услуга не найдена!");
-                return View(sale);
+                ModelState.AddModelError("ServiceId", "Выбранная услуга не найдена в системе!");
+                return View(await ReloadViewData(sale));
             }
 
-            // Рассчитываем даты начала и окончания действия абонемента
-            sale.StartDate = DateTime.UtcNow.Date; // Абонемент начинается сегодня
+            // Явно устанавливаем даты на основе логики приложения
+            sale.StartDate = DateTime.UtcNow.Date;
             sale.EndDate = sale.StartDate.AddDays(service.DurationDays);
             sale.SaleDate = DateTime.UtcNow.Date;
 
             _context.AbonnementSales.Add(sale);
-            await _context.SaveChangesAsync();
-
-            return RedirectToAction(nameof(Index));
+        
+            try
+            {
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("", $"Ошибка при сохранении в базу данных: {ex.Message}");
+                return View(await ReloadViewData(sale));
+            }
         }
 
-        // Если ModelState невалиден, повторно заполняем списки
-        ViewBag.Clients = _context.Clients
+        // Если ModelState невалиден — перезагружаем списки и возвращаем форму с ошибками
+        return View(await ReloadViewData(sale));
+    }
+    #endregion
+    
+    private async Task<AbonnementSale> ReloadViewData(AbonnementSale sale)
+    {
+        ViewBag.Clients = await _context.Clients
             .Select(client => new SelectListItem
             {
                 Value = client.Id.ToString(),
                 Text = $"{client.FirstName} {client.LastName} ({client.Phone})"
             })
-            .ToList();
+            .ToListAsync();
 
-        ViewBag.Services = _context.Services
+        ViewBag.Services = await _context.Services
             .Select(service => new SelectListItem
             {
                 Value = service.Id.ToString(),
                 Text = $"{service.Name} — {service.Price} ₽ ({service.DurationDays} дней)"
             })
-            .ToList();
+            .ToListAsync();
 
-        return View(sale);
+        return sale;
     }
-    #endregion
     // GET: /AbonnementSales/GetServiceDuration?serviceId=1
     [HttpGet]
     [Authorize]
@@ -167,77 +181,67 @@ public class AbonnementSalesController: Controller
     #region Обработка сохранения изменений
     public async Task<IActionResult> Edit(int id, AbonnementSale sale)
     {
-        if (id != sale.Id)
+if (id != sale.Id)
         return NotFound();
 
     if (ModelState.IsValid)
     {
         try
         {
-            // Получаем текущую запись из БД с отслеживанием изменений
             var existingSale = await _context.AbonnementSales
                 .FirstOrDefaultAsync(s => s.Id == id);
-
 
             if (existingSale == null)
                 return NotFound();
 
-            // Присваиваем новые значения из формы
+            // Сохраняем неизменные поля
             existingSale.ClientId = sale.ClientId;
             existingSale.ServiceId = sale.ServiceId;
             existingSale.SaleDate = sale.SaleDate;
 
-            // Проверяем, изменилось ли поле ServiceId
             var entry = _context.Entry(existingSale);
+
+            // Если услуга изменилась — пересчитываем EndDate на основе исходного StartDate
             if (entry.Property(e => e.ServiceId).IsModified)
             {
-                // Пересчитываем даты при смене услуги
                 var service = await _context.Services.FindAsync(sale.ServiceId);
                 if (service != null)
                 {
-                    existingSale.StartDate = DateTime.Today;
+                    // Сохраняем исходный StartDate, пересчитываем EndDate
                     existingSale.EndDate = existingSale.StartDate.AddDays(service.DurationDays);
                 }
+                else
+                {
+                    ModelState.AddModelError("ServiceId", "Выбранная услуга не найдена!");
+                    return View(await ReloadViewData(sale));
+                }
+            }
+            else
+            {
+                // Если услуга не менялась, сохраняем старые даты
+                existingSale.StartDate = sale.StartDate;
+                existingSale.EndDate = sale.EndDate;
             }
 
-            // Сохраняем изменения в БД
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            ModelState.AddModelError("", $"Ошибка параллельного изменения: {ex.Message}");
+            _logger.LogWarning(ex, "Конфликт параллельного изменения при редактировании продажи ID: {Id}", id);
+            return View(await ReloadViewData(sale));
         }
         catch (Exception ex)
         {
             ModelState.AddModelError("", $"Ошибка при сохранении: {ex.Message}");
-            // В случае ошибки повторно заполняем списки
-            ViewBag.Clients = _context.Clients.Select(c => new SelectListItem
-            {
-                Value = c.Id.ToString(),
-                Text = $"{c.FirstName} {c.LastName} ({c.Phone})"
-            }).ToList();
-
-            ViewBag.Services = _context.Services.Select(s => new SelectListItem
-            {
-                Value = s.Id.ToString(),
-                Text = $"{s.Name} — {s.Price} ₽ ({s.DurationDays} дней)"
-            }).ToList();
-
-            return View(sale);
+            _logger.LogError(ex, "Ошибка при редактировании продажи абонемента ID: {Id}", id);
+            return View(await ReloadViewData(sale));
         }
     }
 
-    // Если ModelState невалиден, повторно заполняем списки
-    ViewBag.Clients = _context.Clients.Select(c => new SelectListItem
-    {
-        Value = c.Id.ToString(),
-        Text = $"{c.FirstName} {c.LastName} ({c.Phone})"
-    }).ToList();
-
-    ViewBag.Services = _context.Services.Select(s => new SelectListItem
-    {
-        Value = s.Id.ToString(),
-        Text = $"{s.Name} — {s.Price} ₽ ({s.DurationDays} дней)"
-    }).ToList();
-
-    return View(sale);
+    // Если ModelState невалиден, перезагружаем списки и возвращаем форму с ошибками
+    return View(await ReloadViewData(sale));
 }
 #endregion
 

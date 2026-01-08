@@ -9,6 +9,7 @@
     <form method="post">
         <div class="row">
             <div class="col-md-6">
+                <!-- Поле выбора клиента -->
                 <div class="mb-3">
                     <label asp-for="ClientId" class="form-label">Клиент</label>
                     <select asp-for="ClientId" asp-items="ViewBag.Clients"
@@ -18,6 +19,7 @@
                     <span asp-validation-for="ClientId" class="text-danger"></span>
                 </div>
 
+                <!-- Поле выбора услуги -->
                 <div class="mb-3">
                     <label asp-for="ServiceId" class="form-label">Тип абонемента</label>
                     <select asp-for="ServiceId" asp-items="ViewBag.Services"
@@ -27,31 +29,43 @@
                     <span asp-validation-for="ServiceId" class="text-danger"></span>
                 </div>
 
+                <!-- Дата продажи (фиксирована на сегодня) -->
                 <div class="mb-3">
                     <label asp-for="SaleDate" class="form-label">Дата продажи</label>
                     <input asp-for="SaleDate" type="date" class="form-control"
-                           value="@DateTime.Today.ToString("yyyy-MM-dd")" readonly/>
+                           asp-format="{0:yyyy-MM-dd}"
+                           value="@DateTime.UtcNow.Date.ToString("yyyy-MM-dd")" readonly/>
                     <span asp-validation-for="SaleDate" class="text-danger"></span>
                 </div>
 
                 <!-- Блок с информацией о выбранной услуге -->
                 <div id="ServiceInfo" class="alert alert-info mb-3" style="display:none;">
                     <strong>Выбрана услуга:</strong> <span id="ServiceNameDisplay"></span><br>
-                    <strong>Цена:</strong> <span id="PriceDisplay"></span> ₽<br>
+                    <strong>Цена:</strong> <span id="PriceDisplay"></span> ₽<br>
                     <strong>Срок действия:</strong> <span id="DurationDisplay"></span> дней
                 </div>
 
+                <!-- Начало действия (фиксировано на сегодня) -->
                 <div class="mb-3">
                     <label class="form-label">Начало действия</label>
                     <input type="text" class="form-control" readonly
-                           value="@DateTime.Today.ToString("dd.MM.yyyy")"/>
+                           value="@DateTime.UtcNow.Date.ToString("dd.MM.yyyy")"/>
+                    <!-- Скрытое поле для передачи StartDate в контроллер -->
+                    <input asp-for="StartDate" type="hidden"
+                           value="@DateTime.UtcNow.Date.ToString("yyyy-MM-dd")"/>
                 </div>
 
+                <!-- Окончание действия (рассчитывается автоматически) -->
                 <div class="mb-3">
                     <label class="form-label">Окончание действия</label>
+                    <!-- Видимое поле для пользователя (формат дд.мм.гггг) -->
                     <input type="text" class="form-control" readonly
-                           id="EndDateDisplay"/>
-                    <small class="text-muted">Рассчитывается автоматически</small>
+                           id="EndDateDisplay"
+                           placeholder="Выберите услугу для расчёта"/>
+                    <!-- Скрытое поле для передачи EndDate в контроллер (формат yyyy-MM-dd) -->
+                    <input asp-for="EndDate" type="hidden" id="EndDateHidden"/>
+                    <small class="text-muted">Рассчитывается автоматически при выборе услуги</small>
+                    <span asp-validation-for="EndDate" class="text-danger"></span>
                 </div>
 
                 <button type="submit" class="btn btn-primary">Оформить продажу</button>
@@ -66,6 +80,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const serviceSelect = document.getElementById('ServiceSelect');
             const endDateDisplay = document.getElementById('EndDateDisplay');
+            const endDateHidden = document.getElementById('EndDateHidden');
             const serviceInfo = document.getElementById('ServiceInfo');
             const serviceNameDisplay = document.getElementById('ServiceNameDisplay');
             const priceDisplay = document.getElementById('PriceDisplay');
@@ -75,20 +90,16 @@
                 const serviceId = this.value;
 
                 if (!serviceId) {
-                    // Скрываем информацию, если услуга не выбрана
                     serviceInfo.style.display = 'none';
                     endDateDisplay.value = '';
+                    endDateHidden.value = '';
                     return;
                 }
 
                 try {
-                    // AJAX-запрос к нашему API-методу
-                    endDateDisplay.value = 'Загрузка...';
                     const response = await fetch(`/AbonnementSales/GetServiceDuration?serviceId=${serviceId}`);
+                    if (!response.ok) throw new Error('Ошибка сети');
 
-                    if (!response.ok) {
-                        throw new Error('Ошибка сети');
-                    }
 
                     const data = await response.json();
 
@@ -98,18 +109,25 @@
                     durationDisplay.textContent = data.durationDays;
                     serviceInfo.style.display = 'block';
 
-                    // Рассчитываем дату окончания
-                    const startDate = new Date();
+
+                    // Рассчитываем дату окончания в ISO‑формате (yyyy-MM-dd)
+                    const startDate = new Date('@DateTime.UtcNow.Date.ToString("yyyy-MM-dd")');
                     const endDate = new Date(startDate);
                     endDate.setDate(startDate.getDate() + data.durationDays);
 
-                    // Форматируем дату в читаемый вид (дд.мм.гггг)
-                    const formattedDate = endDate.toLocaleDateString('ru-RU');
-                    endDateDisplay.value = formattedDate;
+                    // Форматируем для отображения (дд.мм.гггг)
+                    const day = String(endDate.getDate()).padStart(2, '0');
+                    const month = String(endDate.getMonth() + 1).padStart(2, '0');
+                    const year = endDate.getFullYear();
+                    endDateDisplay.value = `${day}.${month}.${year}`;
+
+
+                    // Устанавливаем скрытое поле в ISO‑формате для отправки в контроллер
+                    endDateHidden.value = endDate.toISOString().split('T')[0];
                 } catch (error) {
                     console.error('Ошибка при получении данных:', error);
                     alert('Не удалось загрузить данные услуги. Проверьте подключение к сети.');
-                    endDateDisplay.value = '';
+                    endDateDisplay.value = 'Ошибка загрузки';
                     serviceInfo.style.display = 'none';
                 }
             });
