@@ -10,7 +10,6 @@
     <form method="post" id="abonnementForm">
         <input type="hidden" asp-for="Id" />
 
-
         <div class="row">
             <div class="col-md-6">
                 <!-- Поле выбора клиента -->
@@ -81,7 +80,6 @@
     </form>
 </div>
 
-
 <!-- Модальное окно ошибки -->
 <div class="modal fade" id="validationModal" tabindex="-1" aria-labelledby="validationModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -101,106 +99,9 @@
 </div>
 
 @section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('abonnementForm');
-            const maxVisitsInput = document.getElementById('@Html.IdFor(m => m.MaxVisits)');
-            const validationModalEl = document.getElementById('validationModal');
-            const validationMessageEl = document.getElementById('validationMessage');
-
-            // Инициализация модального окна Bootstrap
-            const validationModal = new bootstrap.Modal(validationModalEl);
-
-            // Обработчик отправки формы
-            form.addEventListener('submit', function(event) {
-                // Проверяем общую валидность формы
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-
-                    // Проверяем конкретное поле MaxVisits
-                    if (!maxVisitsInput.value || maxVisitsInput.value.trim() === '') {
-                validationMessageEl.textContent = 'Поле "Максимальное количество посещений" обязательно для заполнения.';
-            } else {
-                validationMessageEl.textContent = 'Пожалуйста, заполните все обязательные поля.';
-            }
-
-            // Показываем модальное окно
-            validationModal.show();
-        }
-
-        // Добавляем стили для индикации ошибок
-        form.classList.add('was-validated');
-    });
-
-    // Элементы для пересчёта даты окончания
-    const serviceSelect = document.getElementById('ServiceSelect');
-    const startDateInput = document.getElementById('StartDate');
-    const endDateDisplay = document.getElementById('EndDateDisplay');
-    const endDateHidden = document.getElementById('EndDateHidden');
-    const serviceInfo = document.getElementById('ServiceInfo');
-    const serviceNameDisplay = document.getElementById('ServiceNameDisplay');
-    const priceDisplay = document.getElementById('PriceDisplay');
-    const durationDisplay = document.getElementById('DurationDisplay');
-
-    // Функция пересчёта даты окончания
-    function recalculateEndDate() {
-        const startDateStr = startDateInput.value;
-        const serviceId = serviceSelect.value;
-
-        // Если нет данных, очищаем EndDate
-        if (!startDateStr || !serviceId) {
-            endDateDisplay.value = '';
-            endDateHidden.value = '';
-            if (serviceInfo) serviceInfo.style.display = 'none';
-            return;
-        }
-
-        const url = `${window.location.origin}/AbonnementSales/GetServiceDuration?serviceId=${serviceId}`;
-
-        fetch(url)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                const startDate = new Date(startDateStr);
-                const newEndDate = new Date(startDate);
-                newEndDate.setDate(startDate.getDate() + data.durationDays);
-
-                // Форматируем в ISO для скрытого поля
-                const isoEndDate = newEndDate.toISOString().split('T')[0];
-                endDateDisplay.value = isoEndDate;
-                endDateHidden.value = isoEndDate;
-
-                // Обновляем информацию об услуге
-                if (serviceNameDisplay) serviceNameDisplay.textContent = data.serviceName;
-                if (priceDisplay) priceDisplay.textContent = data.price;
-                if (durationDisplay) durationDisplay.textContent = data.durationDays;
-                if (serviceInfo) serviceInfo.style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Ошибка при получении данных:', error);
-                alert(`Не удалось загрузить данные услуги: ${error.message}. Проверьте подключение к сети.`);
-
-                // При ошибке очищаем EndDate
-                endDateDisplay.value = '';
-                endDateHidden.value = '';
-                if (serviceInfo) serviceInfo.style.display = 'none';
-            });
-    }
-
-    // Обработчики событий для пересчёта
-    if (serviceSelect) serviceSelect.addEventListener('change', recalculateEndDate);
-    if (startDateInput) startDateInput.addEventListener('change', recalculateEndDate);
-
-
-    // Инициализация при загрузке (если элементы найдены и есть выбор)
-    if (serviceSelect && startDateInput && serviceSelect.value && startDateInput.value) {
-        recalculateEndDate();
-    }
-});
-</script>
+    <!-- Подключаем отдельные JS‑файлы -->
+    <script src="~/js/create_abonementSale/toast-notifications.js"></script>
+    <script src="~/js/create_abonementSale/form-validation.js"></script>
+    <script src="~/js/create_abonementSale/date-calculation.js"></script>
+    <script src="~/js/create_abonementSale/create-page-init.js"></script>
 }
