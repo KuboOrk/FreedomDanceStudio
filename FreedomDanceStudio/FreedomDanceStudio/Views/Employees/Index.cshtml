@@ -11,26 +11,43 @@
         </a>
     </div>
 
-    <table class="table table-striped">
+    <!-- Строка поиска -->
+    <div class="search-container mb-4">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text"
+                   id="searchInput"
+                   class="form-control form-control-lg"
+                   placeholder="Введите ФИО, телефон или email сотрудника..."
+                   aria-label="Поиск сотрудников">
+        </div>
+        <small class="text-muted mt-2">Поиск выполняется автоматически при вводе</small>
+    </div>
+
+    <table class="table table-striped table-hover">
         <thead>
         <tr>
             <th>ФИО</th>
             <th>Телефон</th>
             <th>Email</th>
             <th>Зарплата (₽)</th>
-            <th></th>
+            <th class="text-end">Действия</th>
         </tr>
         </thead>
-        <tbody>
+        <tbody id="employeesTableBody">
         @foreach (var item in Model)
         {
             <tr>
                 <td>@item.FirstName @item.LastName</td>
-                <td>@item.Phone</td>
-                <td>@item.Email</td>
-                <td>@item.Salary</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Редактировать</a>
+                <td>@(item.Phone ?? "-")</td>
+                <td>@(item.Email ?? "-")</td>
+                <td>@item.Salary.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("ru-RU")) ₽</td>
+
+                <td class="text-end">
+                    <a asp-action="Edit" asp-route-id="@item.Id"
+                       class="btn btn-sm btn-outline-primary me-1">Редактировать</a>
                     <form asp-action="Delete" method="post" style="display:inline;">
                         <input type="hidden" name="id" value="@item.Id"/>
                         <button type="submit" class="btn btn-sm btn-outline-danger"
@@ -41,4 +58,13 @@
         }
         </tbody>
     </table>
+
+    <!-- Сообщение об отсутствии результатов -->
+    <div id="noResultsMessage" class="alert alert-info text-center" style="display:none;">
+        Сотрудники не найдены по вашему запросу.
+    </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/employees-search.js"></script>
+}
