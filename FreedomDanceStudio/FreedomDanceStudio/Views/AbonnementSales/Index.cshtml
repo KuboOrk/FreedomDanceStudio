@@ -14,7 +14,7 @@
     {
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                showToast('Ошибка', '@Html.Raw(TempData["EditError"]?.ToString())', 'danger');
+                showToast('Ошибка', '@Html.Raw(TempData["EditError"].ToString())', 'danger');
             });
         </script>
     }
@@ -23,7 +23,7 @@
     {
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                showToast('Успех', '@Html.Raw(TempData["SuccessMessage"]?.ToString())', 'success');
+                showToast('Успех', '@Html.Raw(TempData["SuccessMessage"].ToString())', 'success');
             });
         </script>
     }
@@ -32,7 +32,7 @@
     {
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                showToast('Внимание', '@Html.Raw(TempData["WarningMessage"]?.ToString())', 'warning');
+                showToast('Внимание', '@Html.Raw(TempData["WarningMessage"].ToString())', 'warning');
             });
         </script>
     }
@@ -127,213 +127,9 @@
 </div>
 
 @section Scripts {
-    <script>
-        // Функция показа всплывающего уведомления (toast)
-        function showToast(title, message, type = 'info') {
-            const container = document.getElementById('liveToastContainer');
-
-            // Генерируем уникальный ID для тоста
-            const toastId = 'toast-' + Date.now() + Math.random().toString(36).substr(2, 9);
-
-            // Определяем стили по типу
-            const typeClasses = {
-                'success': 'bg-success text-white',
-                'danger': 'bg-danger text-white',
-                'warning': 'bg-warning text-dark',
-                'info': 'bg-info text-white'
-            };
-
-            const headerClasses = {
-                'success': 'bg-success-subtle',
-                'danger': 'bg-danger-subtle',
-                'warning': 'bg-warning-subtle',
-                'info': 'bg-info-subtle'
-            };
-
-            const currentTypeClass = typeClasses[type] || typeClasses['info'];
-            const currentHeaderClass = headerClasses[type] || headerClasses['info'];
-
-            // Создаём HTML тоста
-            const toastHtml = `
-                <div id="${toastId}" class="toast align-items-center text-white ${currentTypeClass}" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div class="toast-header ${currentHeaderClass}">
-                    <strong class="me-auto">${title}</strong>
-            <small>только что</small>
-            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-            ${message}
-        </div>
-    </div>
-</div>`;
-
-
-            // Вставляем в контейнер
-            container.insertAdjacentHTML('afterbegin', toastHtml);
-
-            // Инициализируем и показываем
-            const toastEl = document.getElementById(toastId);
-            const toast = new bootstrap.Toast(toastEl, {
-                autohide: true,
-                delay: 5000 // Автоскрытие через 5 секунд
-            });
-
-            toast.show();
-
-            // Удаляем элемент из DOM после скрытия
-            toastEl.addEventListener('hidden.bs.toast', function () {
-                this.remove();
-            });
-        }
-
-        // Функция переинициализации состояния кнопок
-        function refreshVisitButtons() {
-            document.querySelectorAll('.mark-visit-btn').forEach(btn => {
-                const row = btn.closest('tr');
-                const visitCount = parseInt(row.getAttribute('data-visit-count')) || 0;
-                const maxVisits = parseInt(row.getAttribute('data-max-visits')) || 0;
-
-                if (maxVisits > 0 && visitCount >= maxVisits) {
-                    btn.disabled = true;
-                    btn.textContent = 'Исчерпано';
-                    btn.classList.remove('btn-outline-success', 'btn-success');
-                    btn.classList.add('btn-danger');
-                    btn.title = 'Лимит посещений исчерпан';
-                } else {
-                    btn.disabled = false;
-                    btn.textContent = 'Отметить';
-                    btn.classList.remove('btn-danger', 'btn-success');
-                    btn.classList.add('btn-outline-success');
-                    btn.title = 'Отметить посещение клиента';
-                }
-            });
-        }
-        // Обработчики для кнопок «Отметить посещение»
-        document.querySelectorAll('.mark-visit-btn').forEach(btn => {
-            btn.addEventListener('click', async function () {
-                const abonnementId = this.getAttribute('data-abonnement-id');
-                const row = this.closest('tr');
-                const visitCountEl = row.querySelector('.badge');
-                const maxVisits = parseInt(row.getAttribute('data-max-visits')) || 0;
-
-                try {
-                    const response = await fetch('/ClientVisits/MarkVisit', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                        },
-                        body: `abonnementSaleId=${abonnementId}`
-                    });
-
-                    if (response.ok) {
-                        const result = await response.json();
-                        if (result.success) {
-                            // Обновляем счётчик
-                            visitCountEl.textContent = result.visitCount;
-                            row.setAttribute('data-visit-count', result.visitCount);
-                            refreshVisitButtons(); // Переинициализация кнопок
-                            showToast('Успех', result.message, 'success');
-                        } else {
-                            // Ошибка от сервера (лимит исчерпан)
-                            visitCountEl.textContent = result.visitCount;
-                            row.setAttribute('data-visit-count', result.visitCount);
-                            refreshVisitButtons();
-                            showToast('Ошибка', result.message, 'danger');
-                        }
-                    } else {
-                        showToast('Ошибка сервера', 'HTTP ' + response.status, 'danger');
-                    }
-} catch (error) {
-                    console.error('Ошибка при отметке посещения (ID: ' + abonnementId + '):', error);
-                    showToast('Ошибка', 'Не удалось отметить посещение. Проверьте консоль (F12).', 'danger');
-                }
-});
-        });
-
-        // --- ОБРАБОТЧИК ДЛЯ КНОПКИ «ИСТОРИЯ ПОСЕЩЕНИЙ» ---
-        document.querySelectorAll('.view-history-btn').forEach(btn => {
-            btn.addEventListener('click', async function () {
-                const abonnementId = this.getAttribute('data-abonnement-id');
-
-                try {
-                    // Отправляем запрос на сервер за историей посещений
-                    const response = await fetch(`/ClientVisits/GetVisitHistory?abonnementSaleId=${abonnementId}`);
-
-                    if (response.ok) {
-                        const history = await response.json();
-                        showVisitHistoryModal(history, abonnementId);
-                    } else {
-                        showToast('Ошибка загрузки', 'HTTP ' + response.status, 'danger');
-                    }
-                } catch (error) {
-                    console.error('Ошибка при загрузке истории посещений (ID: ' + abonnementId + '):', error);
-                    showToast('Ошибка', 'Не удалось загрузить историю посещений.', 'danger');
-                }
-            });
-        });
-
-        // Функция отображения модального окна с историей посещений
-        function showVisitHistoryModal(history, abonnementId) {
-            // Создаём модальное окно динамически
-            const modalHtml = `
-<div class="modal fade" id="visitHistoryModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">История посещений (абонемент №${abonnementId})</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                ${history.length > 0
-                ? `<table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Дата посещения</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${history.map(visit => `
-            <tr>
-                <td>${new Date(visit.visitDate).toLocaleDateString('ru-RU')}</td>
-            </tr>`).join('')}
-        </tbody>
-    </table>`
-                : '<p class="text-muted">Посещения не найдены</p>'
-            }
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-            </div>
-        </div>
-    </div>
-</div>`;
-
-            // Вставляем модальное окно в DOM
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-            // Инициализируем и показываем модальное окно (Bootstrap 5)
-            const modal = new bootstrap.Modal(document.getElementById('visitHistoryModal'));
-            modal.show();
-
-            // Удаляем модальное окно из DOM после закрытия
-            document.getElementById('visitHistoryModal').addEventListener('hidden.bs.modal', function () {
-                this.remove();
-            });
-        }
-
-        // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', function () {
-            // Сначала устанавливаем начальные значения счётчиков в data-атрибуты
-            document.querySelectorAll('tr[data-max-visits]').forEach(row => {
-                const visitCountEl = row.querySelector('.badge');
-                const currentCount = parseInt(visitCountEl.textContent) || 0;
-                row.setAttribute('data-visit-count', currentCount);
-            });
-
-            // Затем инициализируем состояние кнопок
-            refreshVisitButtons();
-        });
-    </script>
+    <!-- Подключаем отдельные JS‑файлы -->
+    <script src="~/js/toast-notifications.js"></script>
+    <script src="~/js/visit-management.js"></script>
+    <script src="~/js/history-modal.js"></script>
+    <script src="~/js/main-page-init.js"></script>
 }
