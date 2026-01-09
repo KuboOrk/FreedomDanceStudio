@@ -5,14 +5,10 @@ namespace FreedomDanceStudio.Models;
 
 public class ClientVisit
 {
-    [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id { get; set; }
+    [Key] [DatabaseGenerated(DatabaseGeneratedOption.Identity)] public int Id { get; set; }
 
-    [Required]
-    [Display(Name = "Продажа абонемента")]
-    public int AbonnementSaleId { get; set; }
-    
+    [Required] [Display(Name = "Продажа абонемента")] public int AbonnementSaleId { get; set; }
+
     public virtual AbonnementSale? AbonnementSale { get; set; }
 
     [Required]
@@ -21,7 +17,5 @@ public class ClientVisit
     [DisplayFormat(DataFormatString = "{0:dd.MM.yyyy HH:mm}")]
     public DateTime VisitDate { get; set; } = DateTime.UtcNow;
 
-    [Display(Name = "Создано")]
-    [DataType(DataType.DateTime)]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    [Display(Name = "Создано")] [DataType(DataType.DateTime)] public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

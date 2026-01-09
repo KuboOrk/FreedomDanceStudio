@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FreedomDanceStudio.Controllers;
 
 [Authorize(Roles = "Admin")]
-public class ClientVisitsController: Controller
+public class ClientVisitsController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<ClientVisitsController> _logger;
@@ -18,89 +18,96 @@ public class ClientVisitsController: Controller
         _logger = logger;
     }
 
+    #region Отметить посещение клиента
+
     // POST: Отметить посещение
     [HttpPost]
     [ValidateAntiForgeryToken]
-    #region Отметить посещение клиента
     public async Task<IActionResult> MarkVisit(int abonnementSaleId)
     {
         try
-    {
-        var abonnementSale = await _context.AbonnementSales
-            .Include(s => s.Visits)
-            .FirstOrDefaultAsync(s => s.Id == abonnementSaleId);
-
-        if (abonnementSale == null)
-            return NotFound(new
-            {
-                success = false,
-                message = "Абонемент не найден"
-            });
-
-        // Проверка даты действия абонемента
-        if (abonnementSale.EndDate < DateTime.UtcNow.Date)
-            return BadRequest(new
-            {
-                success = false,
-                message = "Абонемент истёк!"
-            });
-
-        // Проверка лимита посещений
-        var currentVisitCount = abonnementSale.Visits?.Count ?? 0;
-        bool isVisitAllowed = true;
-
-        if (abonnementSale.MaxVisits > 0 && currentVisitCount >= abonnementSale.MaxVisits)
         {
-            isVisitAllowed = false;
-            return BadRequest(new
+            var abonnementSale = await _context.AbonnementSales
+                .Include(s => s.Visits)
+                .FirstOrDefaultAsync(s => s.Id == abonnementSaleId);
+
+            if (abonnementSale == null)
+                return NotFound(new
+                {
+                    success = false,
+                    message = "Абонемент не найден"
+                });
+
+            // Проверка даты действия абонемента
+            if (abonnementSale.EndDate < DateTime.UtcNow.Date)
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Абонемент истёк!"
+                });
+
+            // Проверка лимита посещений
+            var currentVisitCount = abonnementSale.Visits?.Count ?? 0;
+            bool isVisitAllowed = true;
+
+            if (abonnementSale.MaxVisits > 0 && currentVisitCount >= abonnementSale.MaxVisits)
             {
-                success = false,
-                message = $"Лимит посещений ({abonnementSale.MaxVisits}) исчерпан! Осталось посещений: {abonnementSale.MaxVisits - currentVisitCount}",
-                isVisitAllowed = isVisitAllowed // явно возвращаем статус
+                isVisitAllowed = false;
+                return BadRequest(new
+                {
+                    success = false,
+                    message = $"Лимит посещений ({abonnementSale.MaxVisits}) исчерпан! Осталось посещений: {
+                        abonnementSale.MaxVisits - currentVisitCount}",
+                    isVisitAllowed = isVisitAllowed // явно возвращаем статус
+                });
+            }
+
+            // Создание записи о посещении
+            var visit = new ClientVisit
+            {
+                AbonnementSaleId = abonnementSaleId,
+                VisitDate = DateTime.UtcNow
+            };
+
+            _context.ClientVisits.Add(visit);
+            await _context.SaveChangesAsync();
+
+            // Обновляем счётчик после сохранения
+            currentVisitCount++;
+
+            // Пересчитываем доступность для следующего посещения
+            isVisitAllowed = (currentVisitCount < abonnementSale.MaxVisits);
+
+            // Возвращаем полный ответ с информацией о состоянии
+            return Json(new
+            {
+                success = true,
+                message = "Посещение отмечено!",
+                visitCount = currentVisitCount,
+                isVisitAllowed = isVisitAllowed,
+                remainingVisits = abonnementSale.MaxVisits - currentVisitCount
             });
         }
-
-        // Создание записи о посещении
-        var visit = new ClientVisit
+        catch (Exception ex)
         {
-            AbonnementSaleId = abonnementSaleId,
-            VisitDate = DateTime.UtcNow
-        };
-
-        _context.ClientVisits.Add(visit);
-        await _context.SaveChangesAsync();
-
-        // Обновляем счётчик после сохранения
-        currentVisitCount++;
-
-        // Пересчитываем доступность для следующего посещения
-        isVisitAllowed = (currentVisitCount < abonnementSale.MaxVisits);
-
-        // Возвращаем полный ответ с информацией о состоянии
-        return Json(new
-        {
-            success = true,
-            message = "Посещение отмечено!",
-            visitCount = currentVisitCount,
-            isVisitAllowed = isVisitAllowed,
-            remainingVisits = abonnementSale.MaxVisits - currentVisitCount
-        });
+            _logger.LogError(ex,
+                "Ошибка при отметке посещения для абонемента ID: {AbonnementSaleId}",
+                abonnementSaleId);
+            return StatusCode(500,
+                new
+                {
+                    success = false,
+                    message = "Ошибка сервера"
+                });
+        }
     }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Ошибка при отметке посещения для абонемента ID: {AbonnementSaleId}", abonnementSaleId);
-        return StatusCode(500, new
-        {
-            success = false,
-            message = "Ошибка сервера"
-        });
-    } 
-    }
+
     #endregion
+
+    #region Получить историю посещений
 
     // GET: История посещений для конкретного абонемента
     [HttpGet]
-    #region Получить историю посещений
     public async Task<IActionResult> GetVisitHistory(int abonnementSaleId)
     {
         var visits = await _context.ClientVisits
@@ -114,7 +121,6 @@ public class ClientVisitsController: Controller
 
         return Json(visits);
     }
+
     #endregion
-    
-    
 }

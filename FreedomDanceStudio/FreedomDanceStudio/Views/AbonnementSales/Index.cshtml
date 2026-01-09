@@ -14,7 +14,7 @@
     {
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                showToast('Ошибка', '@Html.Raw(TempData["EditError"].ToString())', 'danger');
+                showToast('Ошибка', '@Html.Raw(TempData["EditError"]?.ToString())', 'danger');
             });
         </script>
     }
@@ -23,7 +23,7 @@
     {
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                showToast('Успех', '@Html.Raw(TempData["SuccessMessage"].ToString())', 'success');
+                showToast('Успех', '@Html.Raw(TempData["SuccessMessage"]?.ToString())', 'success');
             });
         </script>
     }
@@ -32,11 +32,11 @@
     {
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                showToast('Внимание', '@Html.Raw(TempData["WarningMessage"].ToString())', 'warning');
+                showToast('Внимание', '@Html.Raw(TempData["WarningMessage"]?.ToString())', 'warning');
             });
         </script>
     }
-    
+
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>@ViewData["Title"]</h2>
         <a asp-action="Create" class="btn btn-primary">

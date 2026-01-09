@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using FreedomDanceStudio.Data;
 using FreedomDanceStudio.Models;
 using Microsoft.AspNetCore.Authorization;
