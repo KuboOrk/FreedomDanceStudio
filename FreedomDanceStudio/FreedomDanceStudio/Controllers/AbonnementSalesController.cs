@@ -8,37 +8,42 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 namespace FreedomDanceStudio.Controllers;
 
 [Authorize]
-public class AbonnementSalesController: Controller
+public class AbonnementSalesController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<AbonnementSalesController> _logger;
 
     #region Конструктор
-    public AbonnementSalesController(ApplicationDbContext context,ILogger<AbonnementSalesController> logger)
+
+    public AbonnementSalesController(ApplicationDbContext context, ILogger<AbonnementSalesController> logger)
     {
         _context = context;
         _logger = logger;
     }
+
     #endregion
+
+    #region Список всех продаж абонементов
 
     // GET: /AbonnementSales
     [HttpGet]
-    #region Список всех продаж абонементов
     public IActionResult Index()
     {
         var sales = _context.AbonnementSales
             .Include(s => s.Client)
             .Include(s => s.Service)
-            .Include((s =>s.Visits))
+            .Include((s => s.Visits))
             .ToList();
         return View(sales);
     }
+
     #endregion
+
+    #region Форма создания новой продажи абонемента
 
     // GET: /AbonnementSales/Create
     [HttpGet]
     [Authorize(Roles = "Admin")]
-    #region Форма создания новой продажи абонемента
     public IActionResult Create()
     {
         // Инициализируем модель с текущей датой по умолчанию
@@ -66,14 +71,17 @@ public class AbonnementSalesController: Controller
 
         return View(newSale);
     }
+
     #endregion
+
+    #region Обработка отправки формы продажи абонемента
 
     // POST: /AbonnementSales/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin")]
-    #region Обработка отправки формы продажи абонемента
-    public async Task<IActionResult> Create([Bind("Id,ClientId,ServiceId,SaleDate,StartDate,EndDate,MaxVisits")] AbonnementSale sale)
+    public async Task<IActionResult> Create(
+        [Bind("Id,ClientId,ServiceId,SaleDate,StartDate,EndDate,MaxVisits")] AbonnementSale sale)
     {
         if (ModelState.IsValid)
         {
@@ -117,9 +125,10 @@ public class AbonnementSalesController: Controller
         // Если ModelState невалиден — возвращаем форму с ошибками
         return View(await ReloadViewData(sale));
     }
+
     #endregion
-    
-    private async Task<AbonnementSale> ReloadViewData(AbonnementSale sale)
+
+    private async Task<AbonnementSale> ReloadViewData(AbonnementSale? sale)
     {
         if (sale == null)
             sale = new AbonnementSale();
@@ -146,10 +155,12 @@ public class AbonnementSalesController: Controller
 
         return sale;
     }
+
+    #region API-метод для получения срока действия услуги
+
     // GET: /AbonnementSales/GetServiceDuration?serviceId=1
     [HttpGet]
     [Authorize]
-    #region API-метод для получения срока действия услуги
     public IActionResult GetServiceDuration(int serviceId)
     {
         var service = _context.Services.Find(serviceId);
@@ -163,12 +174,14 @@ public class AbonnementSalesController: Controller
             price = service.Price
         });
     }
+
     #endregion
-    
+
+    #region Форма редактирования продажи абонемента
+
     // GET: /AbonnementSales/Edit/5
     [HttpGet]
     [Authorize(Roles = "Admin")]
-    #region Форма редактирования продажи абонемента
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null || id == 0)
@@ -193,138 +206,147 @@ public class AbonnementSalesController: Controller
 
         // Заполняем списки для выбора
         ViewBag.Clients = _context.Clients.Select(c => new SelectListItem
-        {
-            Value = c.Id.ToString(),
-            Text = $"{c.FirstName} {c.LastName} ({c.Phone})"
-        }).ToList();
+            {
+                Value = c.Id.ToString(),
+                Text = $"{c.FirstName} {c.LastName} ({c.Phone})"
+            })
+            .ToList();
 
         ViewBag.Services = _context.Services.Select(s => new SelectListItem
-        {
-            Value = s.Id.ToString(),
-            Text = $"{s.Name} — {s.Price} ₽ ({s.DurationDays} дней)"
-        }).ToList();
+            {
+                Value = s.Id.ToString(),
+                Text = $"{s.Name} — {s.Price} ₽ ({s.DurationDays} дней)"
+            })
+            .ToList();
 
         return View(sale);
     }
+
     #endregion
+
+    #region Обработка сохранения изменений
 
     // POST: /AbonnementSales/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "Admin")]
-    #region Обработка сохранения изменений
     public async Task<IActionResult> Edit(int id, AbonnementSale sale)
     {
-if (id != sale.Id)
-        return NotFound();
+        if (id != sale.Id)
+            return NotFound();
 
-    if (ModelState.IsValid)
-    {
-        try
+        if (ModelState.IsValid)
         {
-            var existingSale = await _context.AbonnementSales
-                .FirstOrDefaultAsync(s => s.Id == id);
-
-            if (existingSale == null)
-                return NotFound();
-
-            // Валидация MaxVisits
-            if (sale.MaxVisits < 0)
+            try
             {
-                ModelState.AddModelError("MaxVisits", "Количество посещений не может быть отрицательным");
-                return View(await ReloadViewData(sale));
-            }
+                var existingSale = await _context.AbonnementSales
+                    .FirstOrDefaultAsync(s => s.Id == id);
 
+                if (existingSale == null)
+                    return NotFound();
 
-            // Сохраняем неизменные поля
-            existingSale.ClientId = sale.ClientId;
-            existingSale.ServiceId = sale.ServiceId;
-            existingSale.MaxVisits = sale.MaxVisits;
-
-            var entry = _context.Entry(existingSale);
-
-            // Если услуга изменилась — пересчитываем EndDate на основе StartDate из модели
-            if (entry.Property(e => e.ServiceId).IsModified)
-            {
-                var service = await _context.Services.FindAsync(sale.ServiceId);
-                if (service != null)
+                // Валидация MaxVisits
+                if (sale.MaxVisits < 0)
                 {
-                    // Берём StartDate из модели (может быть изменён пользователем)
-                    existingSale.StartDate = sale.StartDate;
-                    // Пересчитываем EndDate
-                    existingSale.EndDate = existingSale.StartDate.AddDays(service.DurationDays);
+                    ModelState.AddModelError("MaxVisits", "Количество посещений не может быть отрицательным");
+                    return View(await ReloadViewData(sale));
+                }
+
+                // Сохраняем неизменные поля
+                existingSale.ClientId = sale.ClientId;
+                existingSale.ServiceId = sale.ServiceId;
+                existingSale.MaxVisits = sale.MaxVisits;
+
+                var entry = _context.Entry(existingSale);
+
+                // Если услуга изменилась — пересчитываем EndDate на основе StartDate из модели
+                if (entry.Property(e => e.ServiceId).IsModified)
+                {
+                    var service = await _context.Services.FindAsync(sale.ServiceId);
+                    if (service != null)
+                    {
+                        // Берём StartDate из модели (может быть изменён пользователем)
+                        existingSale.StartDate = sale.StartDate;
+
+                        // Пересчитываем EndDate
+                        existingSale.EndDate = existingSale.StartDate.AddDays(service.DurationDays);
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("ServiceId", "Выбранная услуга не найдена!");
+                        return View(await ReloadViewData(sale));
+                    }
                 }
                 else
                 {
-                    ModelState.AddModelError("ServiceId", "Выбранная услуга не найдена!");
-                    return View(await ReloadViewData(sale));
+                    // Если услуга не менялась, сохраняем даты из модели
+                    existingSale.StartDate = sale.StartDate;
+                    existingSale.EndDate = sale.EndDate;
                 }
-            }
-            else
-            {
-                // Если услуга не менялась, сохраняем даты из модели
-                existingSale.StartDate = sale.StartDate;
-                existingSale.EndDate = sale.EndDate;
-            }
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                ModelState.AddModelError("", $"Ошибка параллельного изменения: {ex.Message}");
+                _logger.LogWarning(ex, "Конфликт параллельного изменения при редактировании продажи ID: {Id}", id);
+                return View(await ReloadViewData(sale));
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Ошибка при сохранении: {ex.Message}");
+                _logger.LogError(ex, "Ошибка при редактировании продажи абонемента ID: {Id}", id);
+                return View(await ReloadViewData(sale));
+            }
         }
-        catch (DbUpdateConcurrencyException ex)
-        {
-            ModelState.AddModelError("", $"Ошибка параллельного изменения: {ex.Message}");
-            _logger.LogWarning(ex, "Конфликт параллельного изменения при редактировании продажи ID: {Id}", id);
-            return View(await ReloadViewData(sale));
-        }
-        catch (Exception ex)
-        {
-            ModelState.AddModelError("", $"Ошибка при сохранении: {ex.Message}");
-            _logger.LogError(ex, "Ошибка при редактировании продажи абонемента ID: {Id}", id);
-            return View(await ReloadViewData(sale));
-        }
+
+        // Если ModelState невалиден, перезагружаем списки и возвращаем форму с ошибками
+        return View(await ReloadViewData(sale));
     }
 
-    // Если ModelState невалиден, перезагружаем списки и возвращаем форму с ошибками
-    return View(await ReloadViewData(sale));
-}
-#endregion
+    #endregion
 
-// GET: /AbonnementSales/Delete/5
-[HttpGet]
-[Authorize(Roles = "Admin")]
-#region Форма подтверждения удаления
-public async Task<IActionResult> Delete(int? id)
-{
-    if (id == null || id == 0)
-        return NotFound();
+    #region Форма подтверждения удаления
 
-    var sale = await _context.AbonnementSales
-        .Include(s => s.Client)
-        .Include(s => s.Service)
-        .FirstOrDefaultAsync(s => s.Id == id);
+    // GET: /AbonnementSales/Delete/5
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Delete(int? id)
+    {
+        if (id == null || id == 0)
+            return NotFound();
 
-    if (sale == null)
-        return NotFound();
+        var sale = await _context.AbonnementSales
+            .Include(s => s.Client)
+            .Include(s => s.Service)
+            .FirstOrDefaultAsync(s => s.Id == id);
 
-    return View(sale);
-}
-#endregion
+        if (sale == null)
+            return NotFound();
 
+        return View(sale);
+    }
 
-// POST: /AbonnementSales/Delete/5
-[HttpPost, ActionName("Delete")]
-[ValidateAntiForgeryToken]
-[Authorize(Roles = "Admin")]
-#region Обработка удаления записи
-public async Task<IActionResult> DeletePost(int? id)
-{
-    var sale = await _context.AbonnementSales.FindAsync(id);
-    if (sale == null)
-        return NotFound();
+    #endregion
 
-    _context.AbonnementSales.Remove(sale);
-    await _context.SaveChangesAsync();
-    return RedirectToAction(nameof(Index));
-}
-#endregion
+    #region Обработка удаления записи
+
+    // POST: /AbonnementSales/Delete/5
+    [HttpPost]
+    [ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeletePost(int? id)
+    {
+        var sale = await _context.AbonnementSales.FindAsync(id);
+        if (sale == null)
+            return NotFound();
+
+        _context.AbonnementSales.Remove(sale);
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+
+    #endregion
 }

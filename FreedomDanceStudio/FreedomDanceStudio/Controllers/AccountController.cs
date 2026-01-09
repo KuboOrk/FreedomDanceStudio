@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace FreedomDanceStudio.Controllers;
@@ -15,9 +14,10 @@ public class AccountController : Controller
         return View();
     }
 
+    #region Вход в систему
+
     [HttpPost]
     [ValidateAntiForgeryToken]
-    #region Вход в систему
     public async Task<IActionResult> Login(string username, string password)
     {
         // В реальном приложении — проверка в БД
@@ -41,17 +41,19 @@ public class AccountController : Controller
         ViewData["Error"] = "Неверный логин или пароль";
         return View();
     }
+
     #endregion
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
     #region Выход из системы
+
     /// <summary>
     /// Выполняет выход пользователя из системы.
     /// </summary>
     /// <param name="returnUrl">URL для перенаправления после выхода (если локальный)</param>
     /// <returns>Перенаправление на главную или указанный URL</returns>
-    public async Task<IActionResult> Logout(string returnUrl = null)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Logout(string? returnUrl = null)
     {
         // Проверяем, авторизован ли пользователь
         if (User.Identity?.IsAuthenticated == true)
@@ -75,5 +77,6 @@ public class AccountController : Controller
         TempData["Success"] = "Вы успешно вышли из системы.";
         return RedirectToAction("Index", "Home");
     }
+
     #endregion
 }
