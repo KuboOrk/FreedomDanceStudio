@@ -38,6 +38,52 @@ public class AbonnementSalesController : Controller
     }
 
     #endregion
+    
+    [HttpGet]
+    [ActionName("Search")]
+    [Produces("application/json")]
+    public async Task<IActionResult> Search(string search = "")
+    {
+        try
+        {
+            var sales = _context.AbonnementSales
+                .Include(s => s.Client)
+                .Include(s => s.Service)
+                .Include(s => s.Visits)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                search = search.ToLower();
+                sales = sales.Where(s =>
+                    (s.Client != null &&
+                     ((s.Client.FirstName != null && s.Client.FirstName.ToLower().Contains(search)) ||
+                      (s.Client.LastName != null && s.Client.LastName.ToLower().Contains(search)))) ||
+                    (s.Service != null && s.Service.Name != null && s.Service.Name.ToLower().Contains(search)));
+            }
+
+            var result = await sales.Select(s => new
+            {
+                Id = s.Id,
+                ClientName = s.Client != null
+                    ? $"{s.Client.FirstName ?? ""} {s.Client.LastName ?? ""}".Trim()
+                    : "Клиент не найден",
+                ServiceName = s.Service != null ? s.Service.Name : "Услуга не найдена",
+                SaleDate = s.SaleDate.ToString("dd.MM.yyyy"),
+                StartDate = s.StartDate.ToString("dd.MM.yyyy"),
+                EndDate = s.EndDate.ToString("dd.MM.yyyy"),
+                VisitCount = s.Visits.Count(),
+                MaxVisits = s.MaxVisits
+            }).ToListAsync();
+
+            return Json(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка в методе Search");
+            return StatusCode(500, new { error = "Внутренняя ошибка сервера", details = ex.Message });
+        }
+    }
 
     #region Форма создания новой продажи абонемента
 
