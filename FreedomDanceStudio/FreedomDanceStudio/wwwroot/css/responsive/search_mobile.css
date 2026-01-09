@@ -1,0 +1,11 @@
+/* Адаптивность */
+@media (max-width: 576px) {
+    .search-container {
+        max-width: 100%;
+    }
+
+    .search-container .form-control {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+}

@@ -10,6 +10,7 @@
 @import url('components/navbar.css');
 @import url('components/alerts.css');
 @import url('components/tables.css');
+@import url('components/search.css');
 
 @import url('layout/hero.css');
 @import url('layout/main-content.css');
@@ -17,4 +18,5 @@
 @import url('responsive/mobile.css');
 @import url('responsive/tablet.css');
 @import url('responsive/accessibility.css');
+@import url('responsive/search_mobile.css');
 
