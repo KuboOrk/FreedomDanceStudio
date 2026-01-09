@@ -3,13 +3,64 @@
 }
 
 <!-- Главный экран -->
-<section class="hero-section">
-    <h1>Добро пожаловать в АИС FREEDOM!</h1>
-    <p>Система учёта абонементов танцевальной студии.</p>
+<section class="hero-section py-5 text-center">
+    <div class="container">
+        <h1 class="display-4 mb-3">Добро пожаловать в АИС FREEDOM!</h1>
+        <p class="lead mb-4">Система учёта абонементов танцевальной студии</p>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card bg-primary text-white shadow">
+                <div class="card-body">
+                    <h3 class="card-title">Быстрый старт</h3>
+                    <p class="card-text">Начните работу с системой прямо сейчас!</p>
+                    <a asp-controller="AbonnementSales" asp-action="Create" class="btn btn-light btn-lg">
+                        Создать продажу абонемента
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
 </section>
 
-<!-- Дополнительная секция (опционально) -->
-<section class="container text-center text-white py-5">
-    <h2>Быстрый старт</h2>
-    <p class="lead">Начните работу с системой прямо сейчас!</p>
+<!-- Статистика или важные уведомления -->
+<section class="container py-4">
+    <div class="row">
+        <!-- Карточка «Клиенты» -->
+        <div class="col-md-4 mb-3">
+            <a asp-controller="Clients" asp-action="Index" class="card-link">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">Клиенты</h4>
+                        <p class="card-text">Управляйте клиентской базой и историей посещений</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Карточка «Абонементы» -->
+        <div class="col-md-4 mb-3">
+            <a asp-controller="AbonnementSales" asp-action="Index" class="card-link">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">Абонементы</h4>
+                        <p class="card-text">Создавайте и отслеживайте продажи абонементов</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Карточка «Услуги» -->
+        <div class="col-md-4 mb-3">
+            <a asp-controller="Services" asp-action="Index" class="card-link">
+                <div class="card text-center h-100">
+                    <div class="card-body">
+                        <h4 class="card-title">Услуги</h4>
+                        <p class="card-text">Настраивайте типы абонементов и их параметры</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
 </section>
