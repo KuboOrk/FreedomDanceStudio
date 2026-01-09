@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using FreedomDanceStudio.Data;
 using FreedomDanceStudio.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 namespace FreedomDanceStudio.Controllers;
 
@@ -20,6 +21,34 @@ public class ServicesController: Controller
     public IActionResult Index()
     {
         return View(_context.Services.ToList());
+    }
+    
+    // AJAX: /Services/Search
+    [HttpGet]
+    [ActionName("Search")]
+    [Produces("application/json")]
+    public async Task<IActionResult> Search(string search = "")
+    {
+        var services = _context.Services.AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            search = search.ToLower();
+            services = services.Where(s =>
+                s.Name.ToLower().Contains(search) ||
+                (s.Description != null && s.Description.ToLower().Contains(search)));
+        }
+
+        var result = await services.Select(s => new
+        {
+            Id = s.Id,
+            Name = s.Name,
+            Description = s.Description ?? "-",
+            Price = s.Price,
+            DurationDays = s.DurationDays
+        }).ToListAsync();
+
+        return Json(result);
     }
     
     // GET: /Services/Create
