@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using FreedomDanceStudio.Data;
 using FreedomDanceStudio.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 namespace FreedomDanceStudio.Controllers;
 
@@ -21,6 +22,36 @@ public class ClientsController: Controller
     public IActionResult Index()
     {
         return View(_context.Clients.ToList());
+    }
+    
+    // AJAX: /Clients/Search
+    [HttpGet]
+    [ActionName("Search")]
+    [Produces("application/json")]
+    public async Task<IActionResult> Search(string search = "")
+    {
+        var clients = _context.Clients.AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            search = search.ToLower();
+            clients = clients.Where(c =>
+                c.FirstName.ToLower().Contains(search) ||
+                c.LastName.ToLower().Contains(search) ||
+                c.Phone.ToLower().Contains(search) ||
+                (c.Email != null && c.Email.ToLower().Contains(search)));
+        }
+
+        var result = await clients.Select(c => new
+        {
+            Id = c.Id,
+            FirstName = c.FirstName,
+            LastName = c.LastName,
+            Phone = c.Phone,
+            Email = c.Email ?? "-"
+        }).ToListAsync();
+
+        return Json(result);
     }
 
     // GET: /Clients/Create
