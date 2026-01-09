@@ -1,0 +1,59 @@
+/* Анимация для уведомлений */
+.alert {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Анимация для уведомлений */
+.alert {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Стили для модальных окон */
+.modal-content {
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    border-bottom: none;
+    padding: 1.5rem 2rem;
+}
+
+.modal-footer {
+    border-top: none;
+    padding: 1rem 2rem 1.5rem;
+}
+
+/* Плавное появление элементов */
+.fade-in {
+    opacity: 0;
+    animation: fadeInElement 0.5s ease forwards;
+}
+
+@keyframes fadeInElement {
+    to {
+        opacity: 1;
+    }
+}

@@ -1,0 +1,18 @@
+/* Защита от избыточных анимаций (доступность) */
+@media (prefers-reduced-motion: reduce) {
+    .sidebar,
+    .main-content,
+    .hero-section,
+    .hero-section h1,
+    .hero-section p,
+    .nav-btn {
+        animation: none;
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    .toggle-btn {
+        transition: none;
+    }
+}

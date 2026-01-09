@@ -1,0 +1,64 @@
+/* === СТИЛИ ДЛЯ САЙДБАРА === */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -250px;
+    width: 250px;
+    height: 100vh;
+    background-color: #2c3e50;
+    color: white;
+    transition: left 0.3s ease;
+    z-index: 1030;
+    padding-top: 80px;
+    box-shadow: 3px 0 10px rgba(0,0,0,0.3);
+    overflow-y: auto;
+}
+
+.sidebar.open {
+    left: 0;
+}
+
+.sidebar .nav-link {
+    color: #bdc3c7;
+    padding: 12px 20px;
+    text-decoration: none;
+    display: block;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+    position: relative;
+}
+
+.sidebar .nav-link:hover {
+    color: white;
+    background-color: #34495e;
+    border-left-color: #3498db;
+}
+
+.sidebar .nav-link.active {
+    color: white;
+    border-left-color: #3498db;
+    background-color: #1a252f;
+}
+
+.toggle-btn {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1040;
+    background: #3498db;
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.toggle-btn:hover {
+    background: #2980b9;
+    transform: scale(1.05);
+}

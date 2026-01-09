@@ -1,0 +1,16 @@
+/* Дополнительные стили для форм */
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Стили для валидационных сообщений */
+.text-danger {
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+}

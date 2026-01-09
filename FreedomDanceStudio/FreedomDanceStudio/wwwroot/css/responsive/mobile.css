@@ -1,0 +1,76 @@
+@media (max-width: 768px) {
+    .hero-section h1 {
+        font-size: 2.5rem;
+    }
+
+    .nav-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .nav-btn {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    /* Уменьшаем ширину сайдбара на мобильных */
+    .sidebar {
+        width: 200px;
+        left: -200px;
+    }
+
+    .main-content.shifted {
+        margin-left: 200px;
+    }
+
+    .main-content {
+        padding: 15px;
+    }
+
+    .card-link .card {
+        border-radius: 8px;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-section {
+        padding: 4rem 1rem;
+    }
+
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+
+    .hero-section p {
+        font-size: 1rem;
+        max-width: 100%;
+    }
+
+    .nav-btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    /* Сайдбар — ещё компактнее */
+    .sidebar {
+        width: 180px;
+        left: -180px;
+    }
+
+    .main-content.shifted {
+        margin-left: 180px;
+    }
+
+    /* Адаптивность для мобильных — кнопка выхода */
+    .btn-logout {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+    }
+
+    /* На узких экранах кнопки в столбик */
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+}
