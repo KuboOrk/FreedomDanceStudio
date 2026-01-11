@@ -39,7 +39,7 @@
         <tbody id="employeesTableBody">
         @foreach (var item in Model)
         {
-            <tr>
+            <tr data-employee-id="@item.Id">
                 <td>@item.FirstName @item.LastName</td>
                 <td>@(item.Phone ?? "-")</td>
                 <td>@(item.Email ?? "-")</td>
@@ -65,6 +65,6 @@
     </div>
 </div>
 
-@*@section Scripts {
+@section Scripts {
     <script src="~/js/employees-search.js"></script>
-}*@
+}

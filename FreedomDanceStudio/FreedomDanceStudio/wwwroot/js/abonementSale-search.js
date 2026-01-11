@@ -1,3 +1,6 @@
+/**
+ * Реализует AJAX‑поиск продаж абонементов без разрушения форм и обработчиков
+ */
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const tableBody = document.getElementById('salesTableBody');
@@ -5,12 +8,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingIndicator = document.createElement('div');
     let searchTimeout;
 
+    // Проверка существования обязательных элементов
+    if (!searchInput || !tableBody || !noResultsMessage) {
+        console.error('Критические элементы DOM не найдены');
+        return;
+    }
+
     // Настройка индикатора загрузки
     loadingIndicator.className = 'text-center text-muted my-3';
     loadingIndicator.textContent = 'Поиск...';
     loadingIndicator.style.display = 'none';
     tableBody.parentNode.insertBefore(loadingIndicator, tableBody);
 
+    /**
+     * Выполняет AJAX‑запрос для поиска продаж абонементов
+     */
     async function performSearch(searchTerm) {
         loadingIndicator.style.display = 'block';
         tableBody.style.opacity = '0.6';
@@ -35,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const sales = await response.json();
-            updateTable(sales);
+            updateTableVisibility(sales);
         } catch (error) {
             console.error('Ошибка поиска:', error);
             showError(`Не удалось выполнить поиск: ${error.message}`);
@@ -47,8 +59,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function updateTable(sales) {
-        tableBody.innerHTML = '';
+    /**
+     * Обновляет видимость строк и текст в текстовых ячейках (не трогает формы и кнопки)
+     */
+    function updateTableVisibility(sales) {
+        const allRows = tableBody.querySelectorAll('tr');
+        const saleIds = new Set(sales.map(s => s.id));
+
+        // Скрываем все строки
+        allRows.forEach(row => {
+            row.style.display = 'none';
+        });
 
         if (sales.length === 0) {
             noResultsMessage.style.display = 'block';
@@ -57,47 +78,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
         noResultsMessage.style.display = 'none';
 
+        // Показываем совпадающие строки и обновляем текст ТОЛЬКО в текстовых ячейках
         sales.forEach(sale => {
-            const row = document.createElement('tr');
-            row.setAttribute('data-max-visits', sale.maxVisits);
-            row.setAttribute('data-visit-count', sale.visitCount);
+            const row = tableBody.querySelector(`tr[data-sale-id="${sale.id}"]`);
+            if (row) {
+                row.style.display = '';
+                // Обновляем текст только в первых шести ячейках (без действий и посещений)
+                const textCells = row.querySelectorAll('td:not(:nth-last-child(-n+2))');
+                textCells[0].textContent = sale.id;
+                textCells[1].textContent = sale.clientName;
+                textCells[2].textContent = sale.serviceName;
+                textCells[3].textContent = sale.saleDate;
+                textCells[4].textContent = sale.startDate;
+                textCells[5].textContent = sale.endDate;
 
-            row.innerHTML = `
-                <td>${sale.id}</td>
-                <td>${sale.clientName}</td>
-                <td>${sale.serviceName}</td>
-                <td>${sale.saleDate}</td>
-                <td>${sale.startDate}</td>
-                <td>${sale.endDate}</td>
-                <td>
-                    <span class="badge bg-primary">${sale.visitCount}</span>
-                    <button type="button"
-                    class="btn btn-sm btn-outline-info view-history-btn"
-            data-abonnement-id="${sale.id}"
-            title="Посмотреть историю посещений">
-                <i class="bi bi-clock-history"></i> История
-            </button>
-        </td>
-        <td class="text-end">
-            <a href="/AbonnementSales/Edit/${sale.id}"
-               class="btn btn-sm btn-outline-primary me-1">Изменить</a>
-            <button type="button"
-                class="btn btn-sm btn-outline-success mark-visit-btn"
-                data-abonnement-id="${sale.id}"
-                title="Отметить посещение клиента">
-                <i class="bi bi-calendar-check"></i> Отметить
-            </button>
-            <form action="/AbonnementSales/Delete" method="post" style="display:inline;">
-                <input type="hidden" name="id" value="${sale.id}"/>
-                <button type="submit" class="btn btn-sm btn-outline-danger"
-                        onclick="return confirm('Удалить запись №${sale.id}?')">Удалить</button>
-            </form>
-        </td>`;
+                // Обновляем счётчик посещений в 7‑й ячейке
+                const visitBadge = row.querySelector('.badge.bg-primary');
+                if (visitBadge) {
+                    visitBadge.textContent = sale.visitCount;
+                }
 
-            tableBody.appendChild(row);
+                // Сохраняем атрибуты данных для логики посещений
+                row.setAttribute('data-max-visits', sale.maxVisits);
+                row.setAttribute('data-visit-count', sale.visitCount);
+            }
         });
     }
 
+    /**
+     * Показывает сообщение об ошибке
+     */
     function showError(message) {
         const errorDiv = document.createElement('div');
         errorDiv.className = 'alert alert-danger';
@@ -111,12 +121,14 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => errorDiv.remove(), 5000);
     }
 
+    // Обработчик ввода с задержкой для оптимизации
     searchInput.addEventListener('input', function(e) {
         const searchTerm = e.target.value.trim();
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => performSearch(searchTerm), 300);
     });
 
+    // Инициализация — показываем все строки при загрузке (если нет поиска)
     if (!searchInput.value) {
         performSearch('');
     }

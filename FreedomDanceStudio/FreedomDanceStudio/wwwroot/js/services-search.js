@@ -1,5 +1,5 @@
 /**
- * Реализует AJAX‑поиск абонементов в реальном времени с обработкой состояний
+ * Реализует AJAX‑поиск абонементов без разрушения форм удаления
  */
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
@@ -7,6 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const noResultsMessage = document.getElementById('noResultsMessage');
     const loadingIndicator = document.createElement('div');
     let searchTimeout;
+
+    // Проверка существования обязательных элементов
+    if (!searchInput || !tableBody || !noResultsMessage) {
+        console.error('Критические элементы DOM не найдены');
+        return;
+    }
 
     // Настройка индикатора загрузки
     loadingIndicator.className = 'text-center text-muted my-3';
@@ -18,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
      * Выполняет AJAX‑запрос для поиска абонементов
      */
     async function performSearch(searchTerm) {
-        // Показываем индикатор загрузки
         loadingIndicator.style.display = 'block';
         tableBody.style.opacity = '0.6';
 
@@ -31,26 +36,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const services = await response.json();
-            updateTable(services);
+            updateTableVisibility(services);
         } catch (error) {
             console.error('Ошибка при поиске:', error);
             showError('Не удалось выполнить поиск. Проверьте подключение к сети.');
-            // В случае ошибки оставляем текущую таблицу без изменений
             tableBody.style.opacity = '1';
             loadingIndicator.style.display = 'none';
         } finally {
-            // Скрываем индикатор в любом случае
             loadingIndicator.style.display = 'none';
             tableBody.style.opacity = '1';
         }
     }
 
     /**
-     * Обновляет таблицу с результатами поиска
+     * Обновляет видимость строк и текст в текстовых ячейках (не трогает формы)
      */
-    function updateTable(services) {
-        // Очищаем таблицу
-        tableBody.innerHTML = '';
+    function updateTableVisibility(services) {
+        const allRows = tableBody.querySelectorAll('tr');
+        const serviceIds = new Set(services.map(s => s.id));
+
+        // Скрываем все строки
+        allRows.forEach(row => {
+            row.style.display = 'none';
+        });
 
         if (services.length === 0) {
             noResultsMessage.style.display = 'block';
@@ -59,26 +67,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         noResultsMessage.style.display = 'none';
 
-        // Заполняем таблицу новыми данными
+        // Показываем совпадающие строки и обновляем текст ТОЛЬКО в текстовых ячейках
         services.forEach(service => {
-            const row = document.createElement('tr');
-
-            row.innerHTML = `
-                <td>${service.name}</td>
-                <td>${service.description}</td>
-                <td>${service.price.toLocaleString('ru-RU')} ₽</td>
-                <td>${service.durationDays}</td>
-                <td class="text-end">
-                    <a href="/Services/Edit/${service.id}"
-               class="btn btn-sm btn-outline-primary me-1">Редактировать</a>
-            <form action="/Services/Delete" method="post" style="display:inline;">
-                <input type="hidden" name="id" value="${service.id}"/>
-            <button type="submit" class="btn btn-sm btn-outline-danger"
-            onclick="return confirm('Удалить услугу ${service.name}?')">Удалить</button>
-        </form>
-    </td>`;
-
-            tableBody.appendChild(row);
+            const row = tableBody.querySelector(`tr[data-service-id="${service.id}"]`);
+            if (row) {
+                row.style.display = '';
+                // Обновляем текст только в первых четырёх ячейках (без действий)
+                const textCells = row.querySelectorAll('td:not(:last-child)');
+                textCells[0].textContent = service.name;
+                textCells[1].textContent = service.description || '-';
+                textCells[2].textContent = `${service.price.toLocaleString('ru-RU')} ₽`;
+                textCells[3].textContent = service.durationDays;
+            }
         });
     }
 
@@ -104,11 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Обработчик ввода с задержкой для оптимизации
     searchInput.addEventListener('input', function(e) {
         const searchTerm = e.target.value.trim();
-
-        // Очищаем предыдущий таймер
         clearTimeout(searchTimeout);
-
-        // Запускаем поиск через 300 мс после последнего ввода
         searchTimeout = setTimeout(() => {
             performSearch(searchTerm);
         }, 300);

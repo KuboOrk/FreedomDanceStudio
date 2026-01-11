@@ -76,7 +76,9 @@
         <tbody id="salesTableBody">
         @foreach (var item in Model)
         {
-            <tr data-max-visits="@item.MaxVisits" data-visit-count="@(item.Visits?.Count ?? 0)">
+            <tr data-sale-id="@item.Id"
+                data-max-visits="@item.MaxVisits"
+                data-visit-count="@(item.Visits?.Count ?? 0)">
                 <td>@item.Id</td>
                 <td>
                     @if (item.Client != null)
@@ -118,7 +120,7 @@
 
                 <td class="text-end">
                     <!-- Существующая кнопка редактирования -->
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary me-1">Изменить</a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary me-1">Редактировать</a>
 
                     <!-- НОВАЯ КНОПКА: Отметить посещение -->
                     <button type="button"
@@ -152,5 +154,5 @@
     <script src="~/js/index_abonementSale/visit-management.js"></script>
     <script src="~/js/index_abonementSale/history-modal.js"></script>
     <script src="~/js/index_abonementSale/main-page-init.js"></script>
-    @*<script src="~/js/abonementSale-search.js"></script>*@
+    <script src="~/js/abonementSale-search.js"></script>
 }

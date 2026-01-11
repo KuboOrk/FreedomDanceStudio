@@ -1,5 +1,5 @@
 /**
- * Реализует AJAX‑поиск клиентов в реальном времени с обработкой состояний
+ * Реализует AJAX‑поиск клиентов без разрушения форм удаления
  */
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', function() {
      * Выполняет AJAX‑запрос для поиска клиентов
      */
     async function performSearch(searchTerm) {
-        // Показываем индикатор загрузки
         loadingIndicator.style.display = 'block';
         tableBody.style.opacity = '0.6';
 
@@ -31,27 +30,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const clients = await response.json();
-            updateTable(clients);
+            updateTableVisibility(clients);
         } catch (error) {
             console.error('Ошибка при поиске:', error);
             showError('Не удалось выполнить поиск. Проверьте подключение к сети.');
-            // В случае ошибки НЕ пытаемся восстановить исходные данные через Razor
-            // Вместо этого оставляем текущую таблицу без изменений
             tableBody.style.opacity = '1';
             loadingIndicator.style.display = 'none';
         } finally {
-            // Скрываем индикатор в любом случае
             loadingIndicator.style.display = 'none';
             tableBody.style.opacity = '1';
         }
     }
 
     /**
-     * Обновляет таблицу с результатами поиска
+     * Обновляет видимость строк и текст в текстовых ячейках (не трогает формы)
      */
-    function updateTable(clients) {
-        // Очищаем таблицу
-        tableBody.innerHTML = '';
+    function updateTableVisibility(clients) {
+        const allRows = tableBody.querySelectorAll('tr');
+        const clientIds = new Set(clients.map(c => c.id));
+
+        // Скрываем все строки
+        allRows.forEach(row => {
+            row.style.display = 'none';
+        });
 
         if (clients.length === 0) {
             noResultsMessage.style.display = 'block';
@@ -60,26 +61,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         noResultsMessage.style.display = 'none';
 
-        // Заполняем таблицу новыми данными
+        // Показываем совпадающие строки и обновляем текст ТОЛЬКО в текстовых ячейках
         clients.forEach(client => {
-            const row = document.createElement('tr');
-
-            row.innerHTML = `
-                <td>${client.firstName}</td>
-                <td>${client.lastName}</td>
-                <td>${client.phone}</td>
-                <td>${client.email}</td>
-                <td class="text-end">
-                    <a href="/Clients/Edit/${client.id}"
-               class="btn btn-sm btn-outline-primary me-1">Редактировать</a>
-            <form action="/Clients/Delete" method="post" style="display:inline;">
-                <input type="hidden" name="id" value="${client.id}"/>
-            <button type="submit" class="btn btn-sm btn-outline-danger"
-            onclick="return confirm('Удалить клиента ${client.firstName} ${client.lastName}?')">Удалить</button>
-        </form>
-    </td>`;
-
-            tableBody.appendChild(row);
+            const row = tableBody.querySelector(`tr[data-client-id="${client.id}"]`);
+            if (row) {
+                row.style.display = '';
+                // Обновляем текст только в первых четырёх ячейках (без действий)
+                const textCells = row.querySelectorAll('td:not(:last-child)');
+                textCells[0].textContent = client.firstName;
+                textCells[1].textContent = client.lastName;
+                textCells[2].textContent = client.phone;
+                textCells[3].textContent = client.email || '-';
+            }
         });
     }
 
@@ -105,11 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Обработчик ввода с задержкой для оптимизации
     searchInput.addEventListener('input', function(e) {
         const searchTerm = e.target.value.trim();
-
-        // Очищаем предыдущий таймер
         clearTimeout(searchTimeout);
-
-        // Запускаем поиск через 300 мс после последнего ввода
         searchTimeout = setTimeout(() => {
             performSearch(searchTerm);
         }, 300);

@@ -39,7 +39,7 @@
         <tbody id="servicesTableBody">
         @foreach (var item in Model)
         {
-            <tr>
+            <tr data-service-id="@item.Id">
                 <td>@item.Name</td>
                 <td>@(item.Description ?? "-")</td>
                 <td>@item.Price</td>
@@ -64,6 +64,6 @@
     </div>
 </div>
 
-@*@section Scripts {
+@section Scripts {
     <script src="~/js/services-search.js"></script>
-}*@
+}

@@ -1,5 +1,5 @@
 /**
- * Реализует AJAX‑поиск сотрудников в реальном времени с обработкой состояний
+ * Реализует AJAX‑поиск сотрудников без разрушения форм удаления
  */
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
@@ -7,6 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const noResultsMessage = document.getElementById('noResultsMessage');
     const loadingIndicator = document.createElement('div');
     let searchTimeout;
+
+    // Проверка существования обязательных элементов
+    if (!searchInput || !tableBody || !noResultsMessage) {
+        console.error('Критические элементы DOM не найдены');
+        return;
+    }
 
     // Настройка индикатора загрузки
     loadingIndicator.className = 'text-center text-muted my-3';
@@ -18,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
      * Выполняет AJAX‑запрос для поиска сотрудников
      */
     async function performSearch(searchTerm) {
-        // Показываем индикатор загрузки
         loadingIndicator.style.display = 'block';
         tableBody.style.opacity = '0.6';
 
@@ -31,26 +36,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const employees = await response.json();
-            updateTable(employees);
+            updateTableVisibility(employees);
         } catch (error) {
             console.error('Ошибка при поиске:', error);
             showError('Не удалось выполнить поиск. Проверьте подключение к сети.');
-            // В случае ошибки оставляем текущую таблицу без изменений
             tableBody.style.opacity = '1';
             loadingIndicator.style.display = 'none';
         } finally {
-            // Скрываем индикатор в любом случае
             loadingIndicator.style.display = 'none';
             tableBody.style.opacity = '1';
         }
     }
 
     /**
-     * Обновляет таблицу с результатами поиска
+     * Обновляет видимость строк и текст в текстовых ячейках (не трогает формы)
      */
-    function updateTable(employees) {
-        // Очищаем таблицу
-        tableBody.innerHTML = '';
+    function updateTableVisibility(employees) {
+        const allRows = tableBody.querySelectorAll('tr');
+        const employeeIds = new Set(employees.map(e => e.id));
+
+        // Скрываем все строки
+        allRows.forEach(row => {
+            row.style.display = 'none';
+        });
 
         if (employees.length === 0) {
             noResultsMessage.style.display = 'block';
@@ -59,27 +67,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         noResultsMessage.style.display = 'none';
 
-        // Заполняем таблицу новыми данными
+        // Показываем совпадающие строки и обновляем текст ТОЛЬКО в текстовых ячейках
         employees.forEach(employee => {
-            const row = document.createElement('tr');
-
-            row.innerHTML = `
-                <td>${employee.firstName} ${employee.lastName}</td>
-                <td>${employee.phone || '-'}</td>
-                <td>${employee.email || '-'}</td>
-                <td>${employee.salary} ₽</td>
-                <td class="text-end">
-                    <a href="/Employees/Edit/${employee.id}"
-               class="btn btn-sm btn-outline-primary me-1">Редактировать</a>
-            <form action="/Employees/Delete" method="post" style="display:inline;">
-                <input type="hidden" name="id" value="${employee.id}"/>
-            <button type="submit" class="btn btn-sm btn-outline-danger"
-            onclick="return confirm('Удалить сотрудника ${employee.firstName} ${employee.lastName}?')">Удалить</button>
-        </form>
-    </td>`;
-
-
-            tableBody.appendChild(row);
+            const row = tableBody.querySelector(`tr[data-employee-id="${employee.id}"]`);
+            if (row) {
+                row.style.display = '';
+                // Обновляем текст только в первых четырёх ячейках (без действий)
+                const textCells = row.querySelectorAll('td:not(:last-child)');
+                textCells[0].textContent = `${employee.firstName} ${employee.lastName}`;
+                textCells[1].textContent = employee.phone || '-';
+                textCells[2].textContent = employee.email || '-';
+                textCells[3].textContent = `${employee.salary.toLocaleString('ru-RU')} ₽`;
+            }
         });
     }
 
@@ -105,11 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Обработчик ввода с задержкой для оптимизации
     searchInput.addEventListener('input', function(e) {
         const searchTerm = e.target.value.trim();
-
-        // Очищаем предыдущий таймер
         clearTimeout(searchTimeout);
-
-        // Запускаем поиск через 300 мс после последнего ввода
         searchTimeout = setTimeout(() => {
             performSearch(searchTerm);
         }, 300);

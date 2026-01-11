@@ -39,7 +39,7 @@
         <tbody id="clientsTableBody">
         @foreach (var item in Model)
         {
-            <tr>
+            <tr data-client-id="@item.Id">
                 <td>@item.FirstName</td>
                 <td>@item.LastName</td>
                 <td>@item.Phone</td>
@@ -64,6 +64,6 @@
     </div>
 </div>
 
-@*@section Scripts {
+@section Scripts {
     <script src="~/js/clients-search.js"></script>
-}*@
+}
