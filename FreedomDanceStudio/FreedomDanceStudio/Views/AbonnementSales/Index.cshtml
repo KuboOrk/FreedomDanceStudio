@@ -63,13 +63,12 @@
     <table class="table table-striped table-hover">
         <thead>
         <tr>
-            <th>№</th>
             <th>Клиент</th>
             <th>Услуга</th>
             <th>Дата продажи</th>
             <th>Начало действия</th>
             <th>Окончание действия</th>
-            <th>Посещения</th> <!-- КОЛОНКА С ПОСЕЩЕНИЯМИ -->
+            <th>Посещения</th>
             <th class="text-end">Действия</th>
         </tr>
         </thead>
@@ -79,7 +78,7 @@
             <tr data-sale-id="@item.Id"
                 data-max-visits="@item.MaxVisits"
                 data-visit-count="@(item.Visits?.Count ?? 0)">
-                <td>@item.Id</td>
+                <!-- Удалена ячейка с @item.Id -->
                 <td>
                     @if (item.Client != null)
                     {
@@ -134,7 +133,7 @@
                     <form asp-action="Delete" method="post" style="display:inline;">
                         <input type="hidden" name="id" value="@item.Id"/>
                         <button type="submit" class="btn btn-sm btn-outline-danger"
-                                onclick="return confirm('Удалить запись №@item.Id?')">Удалить</button>
+                                onclick="return confirm('Удалить запись?')">Удалить</button>
                     </form>
                 </td>
             </tr>
