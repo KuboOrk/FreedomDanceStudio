@@ -18,7 +18,11 @@
     <link rel="stylesheet" href="~/css/site.css"/>
 </head>
 <body class="auth-body">
-<div class="auth-container">
+
+<!-- Подключение компонента лоадера -->
+@await Html.PartialAsync("_Loader")
+
+<div class="auth-container" id="loginForm" style="display: none;">
     <div class="auth-card">
         <div class="auth-header">
             <h2 class="auth-title">FREEDOM<span>Dance</span></h2>
@@ -64,6 +68,9 @@
     </div>
 </div>
 
+<!-- Скрипты -->
 <script src="~/js/auth.js"></script>
+<!-- Скрипт лоадера -->
+<script src="~/js/loader.js"></script>
 </body>
 </html>
