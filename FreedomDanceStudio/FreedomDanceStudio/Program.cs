@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using FreedomDanceStudio.Data;
 
-//using FreedomDanceStudio.Interfaces;
-//using FreedomDanceStudio.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,16 +16,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // 2. Сессии — добавляем ДО аутентификации
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Время жизни сессии без активности
-    options.Cookie.HttpOnly = true; // Защита от JS‑доступа
-    options.Cookie.IsEssential = true; // Обязательно для работы
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
 
 // 3. Аутентификация
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Account";
+        options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/Login";
         options.Cookie.HttpOnly = true;
@@ -44,13 +42,8 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("Instructor", "Admin"));
 });
 
-// 4. MVC + Razor Pages (раскомментируйте нужное)
-builder.Services.AddControllersWithViews(); // Для контроллеров
-
-// builder.Services.AddRazorPages(); // Для Razor Pages
-
-// Регистрация сервиса VisitService
-//builder.Services.AddScoped<IVisitService, VisitService>();
+// 4. MVC + Razor Pages
+builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
@@ -70,15 +63,24 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
-app.UseSession(); // ← Добавляем сразу после UseAuthentication!
+app.UseSession();
 app.UseAuthorization();
 
-// === МАРШРУТИЗАЦИЯ (современный способ) ===
+// === МАРШРУТИЗАЦИЯ ===
+
+// Перенаправление с корня на форму входа
+app.MapGet("/", (HttpContext context) =>
+{
+    if (context.User.Identity?.IsAuthenticated != true)
+        return Results.Redirect("/Account/Login");
+    return Results.Redirect("/Home/Index"); // Для авторизованных — главная
+});
+
+
+// Дефолтные маршруты для остальных случаев
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Если используете Razor Pages, раскомментируйте:
-// app.MapRazorPages();
 
 app.Run();

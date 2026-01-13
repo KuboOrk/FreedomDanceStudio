@@ -24,6 +24,12 @@ public class AccountController : Controller
     [Route("Login")]
     public IActionResult Login()
     {
+        var referrer = HttpContext.Request.Headers["Referer"].ToString();
+    
+        // Если пришли с той же страницы — не редиректим
+        if (referrer.Contains("/Account/Login"))
+            return View(); // Просто показываем форму
+
         if (User.Identity?.IsAuthenticated == true)
             return RedirectToAction("Index", "Home");
 

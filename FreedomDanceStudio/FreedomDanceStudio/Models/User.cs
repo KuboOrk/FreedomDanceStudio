@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace FreedomDanceStudio.Models;
 
-public class User: IdentityUser
+public class User
 {
     [Key]
     public int Id { get; set; }
