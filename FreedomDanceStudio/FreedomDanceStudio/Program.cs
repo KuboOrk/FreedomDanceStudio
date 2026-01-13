@@ -27,10 +27,22 @@ builder.Services.AddSession(options =>
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Account/Login"; // путь к странице входа
-        options.LogoutPath = "/Account/Logout"; // путь к выходу
-        options.AccessDeniedPath = "/Account/AccessDenied"; // при отказе в доступе
+        options.LoginPath = "/Account";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/Login";
+        options.Cookie.HttpOnly = true;
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
     });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireRole("Admin"));
+    
+    options.AddPolicy("InstructorOrAdmin", policy =>
+        policy.RequireRole("Instructor", "Admin"));
+});
 
 // 4. MVC + Razor Pages (раскомментируйте нужное)
 builder.Services.AddControllersWithViews(); // Для контроллеров

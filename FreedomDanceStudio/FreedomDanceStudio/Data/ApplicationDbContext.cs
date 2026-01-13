@@ -18,6 +18,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<SalaryCalculation> SalaryCalculations { get; set; }
 
     public DbSet<ClientVisit> ClientVisits { get; set; } = null!;
+    public DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

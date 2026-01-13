@@ -1,24 +1,69 @@
+@model FreedomDanceStudio.Models.User
 @{
-    ViewData["Title"] = "Вход";
+    ViewData["Title"] = "Вход в FREEDOM Dance";
+    Layout = null;
 }
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
 
-<div class="container mt-4">
-    <h2>@ViewData["Title"]</h2>
-
-    @if (ViewData["Error"] != null)
-    {
-        <div class="alert alert-danger">@ViewData["Error"]</div>
-    }
-
-    <form method="post" asp-action="Login">
-        <div class="mb-3">
-            <label for="username" class="form-label">Логин</label>
-            <input type="text" id="username" name="username" class="form-control" required />
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Иконки -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Наши стили -->
+    <link rel="stylesheet" href="~/css/site.css"/>
+</head>
+<body class="auth-body">
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2 class="auth-title">FREEDOM<span>Dance</span></h2>
+            <p class="auth-subtitle">Студия современного танца</p>
         </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Пароль</label>
-            <input type="password" id="password" name="password" class="form-control" required />
+
+        <h3 class="text-center mb-4">Вход в систему</h3>
+
+        <form method="post" asp-action="Login" class="auth-form active">
+            <div class="form-group">
+                <label for="username" class="form-label">Логин</label>
+                <input type="text" id="username" name="username"
+                       class="form-control auth-input" placeholder="Введите логин" required />
+                <div class="invalid-feedback">
+                    Пожалуйста, введите логин
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Пароль</label>
+                <input type="password" id="password" name="password"
+                       class="form-control auth-input" placeholder="Введите пароль" required />
+                <div class="invalid-feedback">
+                    Пожалуйста, введите пароль
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary auth-btn w-100">
+                Войти
+            </button>
+
+            @if (ViewData["Error"] != null)
+            {
+                <div class="alert alert-danger mt-3">
+                    @ViewData["Error"]
+                </div>
+            }
+        </form>
+
+        <div class="text-center mt-3">
+            <a asp-action="Register" class="text-muted">Нет аккаунта? Зарегистрируйтесь</a>
         </div>
-        <button type="submit" class="btn btn-primary">Войти</button>
-    </form>
+    </div>
 </div>
+
+<script src="~/js/auth.js"></script>
+</body>
+</html>
