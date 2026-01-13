@@ -1,0 +1,46 @@
+@model List<FreedomDanceStudio.Models.User>
+@{
+    ViewData["Title"] = "Управление пользователями";
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Логин</th>
+            <th>Имя</th>
+            <th>Фамилия</th>
+            <th>Email</th>
+            <th>Роль</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Id</td>
+                <td>@user.Username</td>
+                <td>@user.FirstName</td>
+                <td>@user.LastName</td>
+                <td>@user.Email</td>
+                <td>@user.Role</td>
+                <td>
+                    <a asp-action="EditRole" asp-route-id="@user.Id" class="btn btn-sm btn-outline-primary">Изменить роль</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

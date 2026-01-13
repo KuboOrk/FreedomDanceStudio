@@ -1,0 +1,24 @@
+@model FreedomDanceStudio.Models.User
+@{
+    ViewData["Title"] = "Изменение роли";
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+    <p>Пользователь: <strong>@Model.Username</strong></p>
+
+    <form method="post" asp-action="EditRole">
+        <input type="hidden" name="id" value="@Model.Id" />
+
+        <div class="mb-3">
+            <label class="form-label">Новая роль:</label>
+            <select name="newRole" class="form-select" required>
+                <option value="User" selected="@(Model.Role == "User")">User</option>
+                <option value="Admin" selected="@(Model.Role == "Admin")">Admin</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+        <a asp-action="Users" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>
