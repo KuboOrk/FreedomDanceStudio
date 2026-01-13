@@ -40,6 +40,10 @@ builder.Services.AddControllersWithViews(); // Для контроллеров
 // Регистрация сервиса VisitService
 //builder.Services.AddScoped<IVisitService, VisitService>();
 
+builder.Services
+    .AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>();
+
 var app = builder.Build();
 
 // === КОНФИГУРАЦИЯ MIDDLEWARE ===
@@ -65,6 +69,8 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.UseHealthChecks("/health");
 
 // Если используете Razor Pages, раскомментируйте:
 // app.MapRazorPages();

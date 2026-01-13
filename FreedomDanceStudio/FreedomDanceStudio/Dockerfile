@@ -20,4 +20,6 @@ RUN dotnet publish "./FreedomDanceStudio.csproj" -c $BUILD_CONFIGURATION -o /app
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+HEALTHCHECK --interval=10m --timeout=10s --start-period=10s \
+CMD curl -f http://localhost:8080/health || exit 1
 ENTRYPOINT ["dotnet", "FreedomDanceStudio.dll"]
