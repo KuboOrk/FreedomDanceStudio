@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using FreedomDanceStudio.Data;
-
+using FreedomDanceStudio.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -57,6 +57,22 @@ else
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+app.Use(async (context, next) =>
+{
+    var userIdCookie = context.Request.Cookies["UserId"];
+    User currentUser = null;
+    if (!string.IsNullOrEmpty(userIdCookie) && int.TryParse(userIdCookie, out int userId))
+    {
+        // Здесь можно внедрить контекст БД или сервис
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        currentUser = dbContext.Users.Find(userId);
+    }
+    context.Items["CurrentUser"] = currentUser;
+    await next();
+});
+
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
