@@ -1,4 +1,4 @@
-@model User
+@model FreedomDanceStudio.Models.User
 @{
     ViewData["Title"] = "Мой профиль";
 }
@@ -12,11 +12,11 @@
                     @if (!string.IsNullOrEmpty(Model.FirstName) || !string.IsNullOrEmpty(Model.LastName))
                     {
                         <span>@(Model.FirstName?.Substring(0,1) + Model.LastName?.Substring(0,1))</span>
-            }
-            else
-            {
-                <span>@Model.Username?.Substring(0,2)</span>
-            }
+                    }
+                    else
+                    {
+                        <span>@Model.Username?.Substring(0,2)</span>
+                    }
                 </div>
                 <h4>@Model.FirstName @Model.LastName</h4>
                 <p class="text-muted">@Model.Username</p>
@@ -30,7 +30,7 @@
                     <h5>Информация профиля</h5>
                     <a asp-action="Edit" class="btn btn-primary btn-sm">
                         <i class="bi bi-pencil"></i> Редактировать
-            </a>
+                    </a>
                 </div>
                 <div class="card-body">
                     <dl class="row">
@@ -45,31 +45,31 @@
                             @if (!string.IsNullOrEmpty(Model.Email))
                             {
                                 <a href="mailto:@Model.Email">@Model.Email</a>
-            }
-            else
-            {
-                <span class="text-muted">Не указан</span>
-            }
-                </dd>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Не указан</span>
+                            }
+                        </dd>
 
-                <dt class="col-sm-3">Телефон:</dt>
-                <dd class="col-sm-9">
-                    @if (!string.IsNullOrEmpty(Model.Phone))
-                    {
-                <a href="tel:@Model.Phone">@Model.Phone</a>
-            }
-            else
-            {
-                <span class="text-muted">Не указан</span>
-            }
-                </dd>
+                        <dt class="col-sm-3">Телефон:</dt>
+                        <dd class="col-sm-9">
+                            @if (!string.IsNullOrEmpty(Model.Phone))
+                            {
+                                <a href="tel:@Model.Phone">@Model.Phone</a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Не указан</span>
+                            }
+                        </dd>
 
-                <dt class="col-sm-3">Роль:</dt>
-                <dd class="col-sm-9">@Model.Role</dd>
+                        <dt class="col-sm-3">Роль:</dt>
+                        <dd class="col-sm-9">@Model.Role</dd>
 
-                <dt class="col-sm-3">Зарегистрирован:</dt>
-                <dd class="col-sm-9">@Model.CreatedAt.ToString("dd.MM.yyyy")</dd>
-            </dl>
+                        <dt class="col-sm-3">Зарегистрирован:</dt>
+                        <dd class="col-sm-9">@Model.CreatedAt.ToString("dd.MM.yyyy")</dd>
+                    </dl>
                 </div>
             </div>
         </div>
