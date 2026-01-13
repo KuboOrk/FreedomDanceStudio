@@ -1,6 +1,5 @@
 using FreedomDanceStudio.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
 using FreedomDanceStudio.Models;
 using Microsoft.AspNetCore.Authorization;
 
@@ -10,26 +9,38 @@ namespace FreedomDanceStudio.Controllers;
 public class ProfileController : Controller
 {
     private readonly ApplicationDbContext _context;
-    private readonly UserManager<User> _userManager;
 
-    public ProfileController(ApplicationDbContext context, UserManager<User> userManager)
+    public ProfileController(ApplicationDbContext context)
     {
         _context = context;
-        _userManager = userManager;
     }
 
-// GET: /Profile/Index — просмотр профиля
+    // GET: /Profile/Index — просмотр профиля
     [HttpGet]
     public IActionResult Index()
     {
-        var user = _userManager.GetUserAsync(User).Result;
+        var userId = GetCurrentUserId();
+        if (userId == null)
+            return RedirectToAction("Login", "Account");
+
+        var user = _context.Users.Find(userId);
+        if (user == null)
+            return RedirectToAction("Login", "Account");
+
         return View(user);
     }
 
     [HttpGet]
     public async Task<IActionResult> Edit()
     {
-        var user = await _userManager.GetUserAsync(User);
+        var userId = GetCurrentUserId();
+        if (userId == null)
+            return RedirectToAction("Login", "Account");
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            return RedirectToAction("Login", "Account");
+
         return View(user);
     }
 
@@ -40,14 +51,42 @@ public class ProfileController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var user = await _userManager.GetUserAsync(User);
+        var userId = GetCurrentUserId();
+        if (userId == null)
+            return RedirectToAction("Login", "Account");
+
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            return RedirectToAction("Login", "Account");
+
+        // Обновляем только изменяемые поля
         user.FirstName = model.FirstName;
         user.LastName = model.LastName;
         user.Email = model.Email;
         user.Phone = model.Phone;
 
-        await _context.SaveChangesAsync();
-        TempData["Success"] = "Профиль успешно обновлён";
-        return RedirectToAction("Index", "Home");
+        try
+        {
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Профиль успешно обновлён";
+            return RedirectToAction("Index");
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError("", "Ошибка при сохранении изменений");
+            return View(model);
+        }
+    }
+
+    /// <summary>
+    /// Получает ID текущего пользователя из куки
+    /// </summary>
+    private int? GetCurrentUserId()
+    {
+        var userIdCookie = HttpContext.Request.Cookies["UserId"];
+        if (string.IsNullOrEmpty(userIdCookie) || !int.TryParse(userIdCookie, out int userId))
+            return null;
+
+        return userId;
     }
 }
