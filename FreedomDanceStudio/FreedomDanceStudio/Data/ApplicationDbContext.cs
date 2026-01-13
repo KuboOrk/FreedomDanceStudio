@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<ClientVisit> ClientVisits { get; set; } = null!;
     public DbSet<User> Users { get; set; }
+    public DbSet<AbonnementExpiryAlert> AbonnementExpiryAlerts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

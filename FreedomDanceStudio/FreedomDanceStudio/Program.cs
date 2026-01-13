@@ -1,3 +1,4 @@
+using FreedomDanceStudio.Attributes;
 using Microsoft.EntityFrameworkCore;
 using FreedomDanceStudio.Data;
 
@@ -12,6 +13,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         opt => opt.EnableRetryOnFailure(3, TimeSpan.FromSeconds(30), null)
     )
 );
+
+builder.Services.AddScoped<IExpiryAlertService, ExpiryAlertService>();
 
 // 2. Сессии — добавляем ДО аутентификации
 builder.Services.AddSession(options =>
