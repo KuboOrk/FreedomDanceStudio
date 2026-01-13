@@ -18,9 +18,27 @@ public class EmployeesController: Controller
 
     // GET: /Employees
     [HttpGet]
-    public IActionResult Index()
+    [ActionName("Index")]
+    public async Task<IActionResult> Index(string search, int page = 1)
     {
-        return View(_context.Employees.ToList());
+        const int pageSize = 10;
+
+        var employees = _context.Employees.AsQueryable();
+
+        // Поиск
+        if (!string.IsNullOrEmpty(search))
+        {
+            employees = employees.Where(e =>
+                e.FirstName.Contains(search) ||
+                e.LastName.Contains(search) ||
+                (e.Phone != null && e.Phone.Contains(search)) ||
+                (e.Email != null && e.Email.Contains(search)));
+        }
+
+        // Пагинация
+        var pagedEmployees = await PagedList<Employee>.CreateAsync(employees, page, pageSize);
+
+        return View(pagedEmployees);
     }
     
     // AJAX: /Employees/Search

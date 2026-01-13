@@ -27,14 +27,31 @@ public class AbonnementSalesController : Controller
 
     // GET: /AbonnementSales
     [HttpGet]
-    public IActionResult Index()
+    [ActionName("Index")]
+    public async Task<IActionResult> Index(string search, int page = 1)
     {
+        const int pageSize = 10;
+
         var sales = _context.AbonnementSales
             .Include(s => s.Client)
             .Include(s => s.Service)
-            .Include((s => s.Visits))
-            .ToList();
-        return View(sales);
+            .Include(s => s.Visits)
+            .AsQueryable();
+
+        // Поиск
+        if (!string.IsNullOrEmpty(search))
+        {
+            sales = sales.Where(s =>
+                (s.Client != null &&
+                 ((s.Client.FirstName != null && s.Client.FirstName.Contains(search)) ||
+                  (s.Client.LastName != null && s.Client.LastName.Contains(search)))) ||
+                (s.Service != null && s.Service.Name != null && s.Service.Name.Contains(search)));
+        }
+
+        // Пагинация
+        var pagedSales = await PagedList<AbonnementSale>.CreateAsync(sales, page, pageSize);
+
+        return View(pagedSales);
     }
 
     #endregion

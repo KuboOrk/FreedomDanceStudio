@@ -18,9 +18,26 @@ public class ServicesController: Controller
     
     // GET: /Services
     [HttpGet]
-    public IActionResult Index()
+    [ActionName("Index")]
+    public async Task<IActionResult> Index(string search, int page = 1)
     {
-        return View(_context.Services.ToList());
+        const int pageSize = 10;
+
+        var services = _context.Services.AsQueryable();
+
+        // Поиск
+        if (!string.IsNullOrEmpty(search))
+        {
+            services = services.Where(s =>
+                s.Name.Contains(search) ||
+                (s.Description != null && s.Description.Contains(search)));
+        }
+
+        // Пагинация
+        var pagedServices = await PagedList<Service>.CreateAsync(services, page, pageSize);
+
+
+        return View(pagedServices);
     }
     
     // AJAX: /Services/Search
