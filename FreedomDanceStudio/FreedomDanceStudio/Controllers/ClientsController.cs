@@ -19,10 +19,28 @@ public class ClientsController: Controller
     // GET: /Clients
     [HttpGet]
     [ActionName("Index")]
-    public IActionResult Index()
+    public async Task<IActionResult> Index(string search, int page = 1)
     {
-        return View(_context.Clients.ToList());
+        const int pageSize = 10;
+
+        var clients = _context.Clients.AsQueryable();
+
+        // Поиск
+        if (!string.IsNullOrEmpty(search))
+        {
+            clients = clients.Where(c =>
+                c.FirstName.Contains(search) ||
+                c.LastName.Contains(search) ||
+                c.Phone.Contains(search) ||
+                (c.Email != null && c.Email.Contains(search)));
+        }
+
+        // Пагинация
+        var pagedClients = await PagedList<Client>.CreateAsync(clients, page, pageSize);
+
+        return View(pagedClients);
     }
+
     
     // AJAX: /Clients/Search
     [HttpGet]
