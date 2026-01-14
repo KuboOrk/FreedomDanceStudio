@@ -80,4 +80,8 @@ public class AbonnementSale
     /// Флаг удаления продажи абонемента
     /// </summary>
     public bool IsDeleted { get; set; } = false;
+    
+    public virtual ICollection<FinancialTransaction> FinancialTransactions { get; set; } = 
+        new List<FinancialTransaction>();
+
 }

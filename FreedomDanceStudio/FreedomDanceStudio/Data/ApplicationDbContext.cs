@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using FreedomDanceStudio.Models;
 
@@ -20,6 +21,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<ClientVisit> ClientVisits { get; set; } = null!;
     public DbSet<User> Users { get; set; }
     public DbSet<AbonnementExpiryAlert> AbonnementExpiryAlerts { get; set; }
+    [AllowNull]
+    public DbSet<FinancialTransaction> FinancialTransactions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

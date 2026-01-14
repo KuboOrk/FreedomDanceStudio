@@ -179,6 +179,18 @@ public class AbonnementSalesController : Controller
             try
             {
                 await _context.SaveChangesAsync();
+                // Создаём запись о доходе от продажи абонемента
+                var incomeTransaction = new FinancialTransaction
+                {
+                    TransactionType = "Income",
+                    Amount = service.Price,
+                    Description = $"Продажа абонемента: {service.Name}",
+                    TransactionDate = sale.SaleDate,
+                    AbonnementSaleId = sale.Id,
+                    IsManual = false
+                };
+                _context.FinancialTransactions.Add(incomeTransaction);
+                await _context.SaveChangesAsync(); // Сохраняем транзакцию
                 // Пересчитываем индикатор для этого абонемента
                 await _alertService.UpdateExpiryAlertForSaleAsync(sale.Id);
                 return RedirectToAction(nameof(Index));
