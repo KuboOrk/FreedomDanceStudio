@@ -65,13 +65,13 @@
     </div>
 </section>
 
-<!-- Блок: Ближайшие окончания абонементов -->
+<!-- Блок: Все абонементы (серверная отрисовка + AJAX‑обновление) -->
 <section class="container py-4">
-    <h3 class="mb-3">Ближайшие окончания абонементов</h3>
-    <div class="row" id="expiryAlertsContainer">
-        @if (ViewBag.ExpiryAlerts != null && ViewBag.ExpiryAlerts.Count > 0)
+    <h3 class="mb-3">Все абонементы</h3>
+    <div class="row" id="allAbonnementAlertsContainer">
+        @if (Model.AllAbonnementAlerts != null && Model.AllAbonnementAlerts.Count > 0)
         {
-            @foreach (var alert in ViewBag.ExpiryAlerts)
+            @foreach (var alert in Model.AllAbonnementAlerts)
             {
                 <div class="col-md-6 col-lg-4 mb-3">
                     <div class="card alert-card @(alert.AlertLevel.ToLower())">
@@ -81,26 +81,24 @@
                                 Абонемент истекает: <strong>@alert.ExpiryDate.ToString("dd.MM.yyyy")</strong>
                             </p>
                             <!-- Круговой индикатор -->
-                            <div class="circular-progress" data-percent="@(100 - (alert.DaysRemaining * 100 / 30))">
+                            <div class="circular-progress" data-percent="@alert.UsagePercent">
                                 <svg viewBox="0 0 36 36" class="circular-chart">
                                     <path class="circle-bg"
                                           d="M18 2.0845
-                 a 15.9155 15.9155 0 0 1 0 31.831
-                 a 15.9155 15.9155 0 0 1 0 -31.831" />
+               a 15.9155 15.9155 0 0 1 0 31.831
+               a 15.9155 15.9155 0 0 1 0 -31.831" />
                                     <path class="circle"
-                                          stroke-dasharray="@(alert.DaysRemaining * 2 * Math.PI * 15.9155 / 30), 100"
+                                          stroke-dasharray="@(((double)alert.UsagePercent / 100.0) * 2.0 * Math.PI * 15.9155), 100"
                                           d="M18 2.0845
-                 a 15.9155 15.9155 0 0 1 0 31.831
-                 a 15.9155 15.9155 0 0 1 0 -31.831" />
+               a 15.9155 15.9155 0 0 1 0 31.831
+               a 15.9155 15.9155 0 0 1 0 -31.831" />
                                 </svg>
-                                <div class="percentage">
-                                    @((100 - (alert.DaysRemaining * 100 / 30)).ToString("0"))%
-                                </div>
+                                <div class="percentage">@alert.UsagePercent%</div>
                             </div>
 
                             <div class="mt-2">
                                 <small class="text-muted">
-                                    Осталось дней: <strong>@alert.DaysRemaining</strong>
+                                    Использовано: <strong>@alert.UsedVisits</strong> из <strong>@alert.MaxVisits</strong> посещений
                                 </small>
                             </div>
 
@@ -118,7 +116,7 @@
         {
             <div class="col-12">
                 <div class="alert alert-info text-center">
-                    Нет абонементов, заканчивающихся в ближайшие 30 дней.
+                    Нет абонементов в системе.
                 </div>
             </div>
         }
@@ -130,5 +128,5 @@
 }
 
 @section Scripts {
-    <script src="~/js/home-expiry-alerts.js"></script>
+    <script src="~/js/home-all-abonnement-alerts.js"></script>
 }

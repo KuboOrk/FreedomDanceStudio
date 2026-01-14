@@ -1,3 +1,4 @@
+using FreedomDanceStudio.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FreedomDanceStudio.Data;
@@ -12,13 +13,15 @@ public class AbonnementSalesController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<AbonnementSalesController> _logger;
+    private readonly IExpiryAlertService _alertService;
 
     #region Конструктор
 
-    public AbonnementSalesController(ApplicationDbContext context, ILogger<AbonnementSalesController> logger)
+    public AbonnementSalesController(ApplicationDbContext context, ILogger<AbonnementSalesController> logger,IExpiryAlertService alertService)
     {
         _context = context;
         _logger = logger;
+        _alertService = alertService;
     }
 
     #endregion
@@ -176,6 +179,8 @@ public class AbonnementSalesController : Controller
             try
             {
                 await _context.SaveChangesAsync();
+                // Пересчитываем индикатор для этого абонемента
+                await _alertService.UpdateExpiryAlertForSaleAsync(sale.Id);
                 return RedirectToAction(nameof(Index));
             }
             catch (DbUpdateException ex)

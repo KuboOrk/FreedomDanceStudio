@@ -1,3 +1,4 @@
+using FreedomDanceStudio.Attributes;
 using FreedomDanceStudio.Data;
 using FreedomDanceStudio.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -11,11 +12,13 @@ public class ClientVisitsController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<ClientVisitsController> _logger;
+    private readonly IExpiryAlertService _alertService; // добавлено
 
-    public ClientVisitsController(ApplicationDbContext context, ILogger<ClientVisitsController> logger)
+    public ClientVisitsController(ApplicationDbContext context, ILogger<ClientVisitsController> logger,IExpiryAlertService alertService)
     {
         _context = context;
         _logger = logger;
+        _alertService = alertService;
     }
 
     #region Отметить посещение клиента
@@ -71,6 +74,8 @@ public class ClientVisitsController : Controller
 
             _context.ClientVisits.Add(visit);
             await _context.SaveChangesAsync();
+            // ПЕРЕСЧЁТ АЛЕ́РТОВ ДЛЯ ЭТОГО АБОНЕМЕНТА
+            await _alertService.UpdateExpiryAlertForSaleAsync(abonnementSaleId);
 
             // Обновляем счётчик после сохранения
             currentVisitCount++;

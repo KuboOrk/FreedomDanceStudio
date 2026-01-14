@@ -75,4 +75,9 @@ public class AbonnementSale
     /// </summary>
     [Display(Name = "Макс. посещений")]
     public int MaxVisits { get; set; } = 0;
+    
+    /// <summary>
+    /// Флаг удаления продажи абонемента
+    /// </summary>
+    public bool IsDeleted { get; set; } = false;
 }

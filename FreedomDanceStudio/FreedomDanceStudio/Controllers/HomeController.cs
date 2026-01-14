@@ -1,8 +1,11 @@
 using FreedomDanceStudio.Attributes;
 using Microsoft.AspNetCore.Mvc;
+using FreedomDanceStudio.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FreedomDanceStudio.Controllers;
 
+[Authorize]
 public class HomeController : Controller
 {
     private readonly IExpiryAlertService _alertService;
@@ -12,19 +15,31 @@ public class HomeController : Controller
         _alertService = alertService;
     }
 
-    #region Главная страница с индикаторами
+    #region Главная страница (серверная загрузка)
 
     [HttpGet]
     [ActionName("Index")]
     public async Task<IActionResult> Index()
     {
-        // Обновляем оповещения (можно вынести в фоновое задание)
-        await _alertService.UpdateExpiryAlertsAsync();
-        
-        // Получаем ближайшие оповещения
-        var alerts = await _alertService.GetUpcomingExpiryAlertsAsync(30);
-        ViewBag.ExpiryAlerts = alerts;
-        return View();
+        var alerts = await _alertService.GetAllAbonnementAlertsAsync();
+        var model = new HomeViewModel
+        {
+            AllAbonnementAlerts = alerts
+        };
+        return View(model);
+    }
+
+    #endregion
+
+    #region API для AJAX‑обновлений
+
+    [HttpGet]
+    [Produces("application/json")]
+    [Route("Home/GetAllAbonnementAlerts")]
+    public async Task<IActionResult> GetAllAbonnementAlerts()
+    {
+        var alerts = await _alertService.GetAllAbonnementAlertsAsync();
+        return Json(alerts);
     }
 
     #endregion
