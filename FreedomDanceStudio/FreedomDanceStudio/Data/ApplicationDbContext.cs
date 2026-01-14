@@ -23,6 +23,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<AbonnementExpiryAlert> AbonnementExpiryAlerts { get; set; }
     [AllowNull]
     public DbSet<FinancialTransaction> FinancialTransactions { get; set; }
+    public DbSet<EmployeeWorkHours> EmployeeWorkHours { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
