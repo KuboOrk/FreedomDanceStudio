@@ -55,6 +55,11 @@
                 <a asp-action="Create" class="btn btn-success mt-4">
                     <i class="bi bi-plus"></i> Добавить транзакцию
                 </a>
+                <button type="button" class="btn btn-info mt-4 ms-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#salaryCalculationModal">
+                    <i class="bi bi-calculator"></i> Рассчитать зарплату
+                </button>
             </div>
         </div>
     </form>
@@ -165,7 +170,8 @@
         </div>
     </div>
 </div>
-
+@await Html.PartialAsync("_SalaryCalculationModal", new EmployeeSalaryCalculation())
 @section Scripts {
     <script src="~/js/finance/finance-page.js"></script>
+    <script src="~/js/salary-calculation.js"></script>
 }

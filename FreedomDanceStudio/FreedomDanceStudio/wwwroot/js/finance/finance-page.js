@@ -79,3 +79,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+function openSalaryCalculationModal(employeeId) {
+    fetch(`/Finance/GetEmployeeData?employeeId=${employeeId}`)
+        .then(response => response.json())
+        .then(employee => {
+            document.getElementById('EmployeeId').value = employee.Id;
+            document.getElementById('HourlyRate').value = employee.Salary;
+            // Здесь можно добавить заполнение дат и часов из EmployeeWorkHours
+            const modal = new bootstrap.Modal(document.getElementById('salaryCalculationModal'));
+            modal.show();
+        })
+        .catch(error => console.error('Ошибка загрузки данных сотрудника:', error));
+}

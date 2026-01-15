@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FreedomDanceStudio.Controllers;
 
 [Authorize]
+[Route("Employees")]
 public class EmployeesController: Controller
 {
     private readonly ApplicationDbContext _context;
@@ -146,5 +147,20 @@ public class EmployeesController: Controller
         _context.Employees.Remove(employee);
         await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
+    }
+    
+    [HttpGet("GetAll")]
+    public async Task<IActionResult> GetAll()
+    {
+        var employees = await _context.Employees
+            .Select(e => new
+            {
+                e.Id,
+                e.FirstName,
+                e.LastName,
+                e.Salary
+            })
+            .ToListAsync();
+        return Json(employees);
     }
 }

@@ -16,14 +16,13 @@ public class ApplicationDbContext : DbContext
     public DbSet<Client> Clients { get; set; }
     public DbSet<AbonnementSale> AbonnementSales { get; set; }
 
-    public DbSet<SalaryCalculation> SalaryCalculations { get; set; }
-
     public DbSet<ClientVisit> ClientVisits { get; set; } = null!;
     public DbSet<User> Users { get; set; }
     public DbSet<AbonnementExpiryAlert> AbonnementExpiryAlerts { get; set; }
     [AllowNull]
     public DbSet<FinancialTransaction> FinancialTransactions { get; set; }
     public DbSet<EmployeeWorkHours> EmployeeWorkHours { get; set; }
+    public DbSet<EmployeeSalaryCalculation> EmployeeSalaryCalculations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
