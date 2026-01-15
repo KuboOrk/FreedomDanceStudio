@@ -128,39 +128,4 @@ public class FinanceController : Controller
             return RedirectToAction(nameof(Index));
         }
     }
-    
-    // GET: /Finance/SalaryCalculations
-    [HttpGet("SalaryCalculations")]
-    public async Task<IActionResult> SalaryCalculations()
-    {
-        var calculations = await _context.EmployeeSalaryCalculations
-            .Include(c => c.Employee)
-            .Include(c => c.FinancialTransaction)
-            .OrderByDescending(c => c.CreatedAt)
-            .ToListAsync();
-        return View(calculations);
-    }
-    
-    #region Предзаполнение МО данными о сотруднике
-    [HttpGet("GetEmployeeData")]
-    [Produces("application/json")]
-    public async Task<IActionResult> GetEmployeeData(int employeeId)
-    {
-        var employee = await _context.Employees
-            .Where(e => e.Id == employeeId)
-            .Select(e => new
-            {
-                e.Id,
-                e.FirstName,
-                e.LastName,
-                e.Salary
-            })
-            .FirstOrDefaultAsync();
-
-        if (employee == null)
-            return NotFound();
-
-        return Json(employee);
-    }
-    #endregion
 }
