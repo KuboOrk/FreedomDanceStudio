@@ -355,43 +355,47 @@ public class AbonnementSalesController : Controller
                     if (service != null)
                     {
                         // Берём StartDate из модели (может быть изменён пользователем)
-                        existingSale.StartDate = sale.StartDate;
+                        existingSale.StartDate = DateTime.SpecifyKind(
+                            (sale.StartDate == default ? DateTime.UtcNow.Date : sale.StartDate),
+                            DateTimeKind.Utc);
 
-                        // Пересчитываем EndDate
-                        existingSale.EndDate = existingSale.StartDate.AddDays(service.DurationDays);
-                    }
-                    else
-                    {
-                        ModelState.AddModelError("ServiceId", "Выбранная услуга не найдена!");
-                        return View(await ReloadViewData(sale));
-                    }
-                }
-                else
-                {
-                    // Если услуга не менялась, сохраняем даты из модели
-                    existingSale.StartDate = sale.StartDate;
-                    existingSale.EndDate = sale.EndDate;
-                }
-
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                        // Пересчитываем EndDate в UTC
+                existingSale.EndDate = DateTime.SpecifyKind(
+                    existingSale.StartDate.AddDays(service.DurationDays),
+                    DateTimeKind.Utc);
             }
-            catch (DbUpdateConcurrencyException ex)
+            else
             {
-                ModelState.AddModelError("", $"Ошибка параллельного изменения: {ex.Message}");
-                _logger.LogWarning(ex, "Конфликт параллельного изменения при редактировании продажи ID: {Id}", id);
-                return View(await ReloadViewData(sale));
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("", $"Ошибка при сохранении: {ex.Message}");
-                _logger.LogError(ex, "Ошибка при редактировании продажи абонемента ID: {Id}", id);
+                ModelState.AddModelError("ServiceId", "Выбранная услуга не найдена!");
                 return View(await ReloadViewData(sale));
             }
         }
+        else
+        {
+            // Если услуга не менялась, сохраняем даты из модели в UTC
+            existingSale.StartDate = DateTime.SpecifyKind(sale.StartDate, DateTimeKind.Utc);
+            existingSale.EndDate = DateTime.SpecifyKind(sale.EndDate, DateTimeKind.Utc);
+        }
 
-        // Если ModelState невалиден, перезагружаем списки и возвращаем форму с ошибками
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+    catch (DbUpdateConcurrencyException ex)
+    {
+        ModelState.AddModelError("", $"Ошибка параллельного изменения: {ex.Message}");
+        _logger.LogWarning(ex, "Конфликт параллельного изменения при редактировании продажи ID: {Id}", id);
         return View(await ReloadViewData(sale));
+    }
+    catch (Exception ex)
+    {
+        ModelState.AddModelError("", $"Ошибка при сохранении: {ex.Message}");
+        _logger.LogError(ex, "Ошибка при редактировании продажи абонемента ID: {Id}", id);
+        return View(await ReloadViewData(sale));
+    }
+    }
+
+    // Если ModelState невалиден, перезагружаем списки и возвращаем форму с ошибками
+    return View(await ReloadViewData(sale));
     }
 
     #endregion
