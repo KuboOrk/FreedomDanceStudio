@@ -83,9 +83,19 @@ public class FinanceController : Controller
     {
         if (ModelState.IsValid)
         {
+            // Преобразуем TransactionDate в UTC, если Kind = Unspecified
+            if (transaction.TransactionDate.Kind == DateTimeKind.Unspecified)
+            {
+                transaction.TransactionDate = transaction.TransactionDate.ToUniversalTime();
+            }
+            else if (transaction.TransactionDate.Kind == DateTimeKind.Local)
+            {
+                transaction.TransactionDate = TimeZoneInfo.ConvertTimeToUtc(transaction.TransactionDate);
+            }
+
             transaction.IsManual = true;
             _context.FinancialTransactions.Add(transaction);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); // Теперь сработает без ошибки
             return RedirectToAction(nameof(Index));
         }
         return View(transaction);
