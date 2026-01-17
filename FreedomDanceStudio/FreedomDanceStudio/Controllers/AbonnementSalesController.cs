@@ -149,61 +149,70 @@ public class AbonnementSalesController : Controller
     public async Task<IActionResult> Create(
         [Bind("Id,ClientId,ServiceId,SaleDate,StartDate,EndDate,MaxVisits")] AbonnementSale sale)
     {
-        if (ModelState.IsValid)
+        _logger.LogInformation("POST Create called. Model: ClientId={ClientId}, ServiceId={ServiceId}",
+        sale.ClientId, sale.ServiceId);
+
+    if (ModelState.IsValid)
+    {
+        var service = await _context.Services.FindAsync(sale.ServiceId);
+        if (service == null)
         {
-            var service = await _context.Services.FindAsync(sale.ServiceId);
-            if (service == null)
-            {
-                ModelState.AddModelError("ServiceId", "Выбранная услуга не найдена в системе!");
-                return View(await ReloadViewData(sale));
-            }
-
-            // Валидация MaxVisits
-            if (sale.MaxVisits < 0)
-            {
-                ModelState.AddModelError("MaxVisits", "Количество посещений не может быть отрицательным");
-                return View(await ReloadViewData(sale));
-            }
-
-            // Берём StartDate из модели или используем текущую дату
-            sale.StartDate = sale.StartDate == default ? DateTime.UtcNow.Date : sale.StartDate;
-
-            // Пересчитываем EndDate после всех проверок
-            sale.EndDate = sale.StartDate.AddDays(service.DurationDays);
-
-            // SaleDate всегда текущая дата
-            sale.SaleDate = DateTime.UtcNow.Date;
-
-            _context.AbonnementSales.Add(sale);
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                // Создаём запись о доходе от продажи абонемента
-                var incomeTransaction = new FinancialTransaction
-                {
-                    TransactionType = "Income",
-                    Amount = service.Price,
-                    Description = $"Продажа абонемента: {service.Name}",
-                    TransactionDate = sale.SaleDate,
-                    AbonnementSaleId = sale.Id,
-                    IsManual = false
-                };
-                _context.FinancialTransactions.Add(incomeTransaction);
-                await _context.SaveChangesAsync(); // Сохраняем транзакцию
-                // Пересчитываем индикатор для этого абонемента
-                await _alertService.UpdateExpiryAlertForSaleAsync(sale.Id);
-                return RedirectToAction(nameof(Index));
-            }
-            catch (DbUpdateException ex)
-            {
-                ModelState.AddModelError("", $"Ошибка при сохранении в базу данных: {ex.Message}");
-                return View(await ReloadViewData(sale));
-            }
+            ModelState.AddModelError("ServiceId", "Выбранная услуга не найдена в системе!");
+            return View(await ReloadViewData(sale));
         }
 
-        // Если ModelState невалиден — возвращаем форму с ошибками
-        return View(await ReloadViewData(sale));
+        // Валидация MaxVisits
+        if (sale.MaxVisits < 0)
+        {
+            ModelState.AddModelError("MaxVisits", "Количество посещений не может быть отрицательным");
+            return View(await ReloadViewData(sale));
+        }
+
+        // Преобразование дат в UTC
+        sale.StartDate = DateTime.SpecifyKind(
+            (sale.StartDate == default ? DateTime.UtcNow.Date : sale.StartDate),
+            DateTimeKind.Utc);
+        
+        sale.EndDate = DateTime.SpecifyKind(sale.StartDate.AddDays(service.DurationDays), DateTimeKind.Utc);
+        sale.SaleDate = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+
+        _context.AbonnementSales.Add(sale);
+
+        try
+        {
+            await _context.SaveChangesAsync();
+
+            // Транзакция дохода
+            var incomeTransaction = new FinancialTransaction
+            {
+                TransactionType = "Income",
+                Amount = service.Price,
+                Description = $"Продажа абонемента: {service.Name}",
+                TransactionDate = sale.SaleDate,
+                AbonnementSaleId = sale.Id,
+                IsManual = false
+            };
+            _context.FinancialTransactions.Add(incomeTransaction);
+            await _context.SaveChangesAsync();
+
+            await _alertService.UpdateExpiryAlertForSaleAsync(sale.Id);
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException ex)
+        {
+            ModelState.AddModelError("", $"Ошибка БД: {ex.Message}");
+            _logger.LogError(ex, "Ошибка сохранения AbonnementSale ID={SaleId}", sale.Id);
+            return View(await ReloadViewData(sale));
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError("", $"Неожиданная ошибка: {ex.Message}");
+            _logger.LogError(ex, "Критическая ошибка при создании продажи");
+            return View(await ReloadViewData(sale));
+        }
+    }
+
+    return View(await ReloadViewData(sale));
     }
 
     #endregion
