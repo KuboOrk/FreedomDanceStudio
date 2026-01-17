@@ -38,4 +38,7 @@ public class FinancialTransaction
     // Флаг ручной транзакции
     [Display(Name = "Ручная транзакция")]
     public bool IsManual { get; set; }
+    
+    public int? EmployeeSalaryCalculationId { get; set; }
+    public virtual EmployeeSalaryCalculation? EmployeeSalaryCalculation { get; set; }
 }

@@ -1,8 +1,10 @@
+using System.Globalization;
 using FreedomDanceStudio.Attributes;
 using Microsoft.EntityFrameworkCore;
 using FreedomDanceStudio.Data;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,19 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 );
 
 builder.Services.AddScoped<IExpiryAlertService, ExpiryAlertService>();
+
+var cultureInfo = new CultureInfo("ru-RU");
+cultureInfo.NumberFormat.NumberDecimalSeparator = ".";
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    options.DefaultRequestCulture = new RequestCulture(cultureInfo);
+    options.SupportedCultures = new List<CultureInfo> { cultureInfo };
+    options.SupportedUICultures = new List<CultureInfo> { cultureInfo };
+});
+
 
 // 2. Сессии — добавляем ДО аутентификации
 builder.Services.AddSession(options =>

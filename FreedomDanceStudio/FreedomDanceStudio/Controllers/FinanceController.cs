@@ -25,6 +25,17 @@ public class FinanceController : Controller
     [HttpGet]
     public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate)
     {
+        // Загрузка списка сотрудников для модального окна
+        var employees = await _context.Employees
+            .Select(e => new Employee
+            {
+                Id = e.Id,
+                FirstName = e.FirstName,
+                LastName = e.LastName
+            })
+            .ToListAsync();
+        ViewBag.Employees = employees;
+        
         var query = _context.FinancialTransactions
             .Include(t => t.AbonnementSale)
             .AsQueryable();

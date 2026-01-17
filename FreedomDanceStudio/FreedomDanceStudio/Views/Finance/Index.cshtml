@@ -21,15 +21,15 @@
             <div class="card bg-danger text-white">
                 <div class="card-body">
                     <h5>Расходы</h5>
-            <h3>@((stats?.TotalExpense ?? 0).ToString("C"))</h3>
+                    <h3>@((stats?.TotalExpense ?? 0).ToString("C"))</h3>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card bg-primary text-white">
                 <div class="card-body">
-            <h5>Баланс</h5>
-            <h3>@((stats?.Balance ?? 0).ToString("C"))</h3>
+                    <h5>Баланс</h5>
+                    <h3>@((stats?.Balance ?? 0).ToString("C"))</h3>
                 </div>
             </div>
         </div>
@@ -55,6 +55,12 @@
                 <a asp-action="Create" class="btn btn-success mt-4">
                     <i class="bi bi-plus"></i> Добавить транзакцию
                 </a>
+                <!-- Кнопка для открытия модального окна расчёта ЗП -->
+                <button type="button" class="btn btn-warning mt-4 ms-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#salaryCalcModal">
+                    <i class="bi bi-calculator"></i> Рассчитать ЗП
+                </button>
             </div>
         </div>
     </form>
@@ -94,33 +100,37 @@
             <tr>
                 <td>@transaction.TransactionDate.ToString("dd.MM.yyyy")</td>
                 <td>
-                    <span class="badge @(transaction.TransactionType == "Income" ? "bg-success" : "bg-danger")">
-                @transaction.TransactionType
-            </span>
+                <span class="badge @(transaction.TransactionType == "Income" ? "bg-success" : "bg-danger")">
+                    @transaction.TransactionType
+                </span>
                 </td>
                 <td>@transaction.Amount.ToString("C")</td>
                 <td>@(transaction.Category ?? "-")</td>
                 <td>@(transaction.Description ?? "-")</td>
                 <td>
-            @if (transaction.AbonnementSale != null)
-            {
-                <span class="text-muted">Продажа абонемента</span>
-            }
-            else if (transaction.IsManual)
-            {
-                <span class="text-muted">Ручная</span>
-            }
+                    @if (transaction.EmployeeSalaryCalculationId.HasValue)
+                    {
+                        <span class="text-muted">Расчёт ЗП №@transaction.EmployeeSalaryCalculationId</span>
+                    }
+                    else if (transaction.AbonnementSale != null)
+                    {
+                        <span class="text-muted">Продажа абонемента</span>
+                    }
+                    else if (transaction.IsManual)
+                    {
+                        <span class="text-muted">Ручная</span>
+                    }
                 </td>
                 <td class="text-end">
-                    <!-- Кнопка для открытия модального окна -->
+                    <!-- Кнопка удаления -->
                     <button type="button" class="btn btn-sm btn-outline-danger"
-                    data-bs-toggle="modal"
-            data-bs-target="#deleteModal"
-            data-transaction-id="@transaction.Id"
-            data-transaction-amount="@transaction.Amount.ToString("C")"
-            data-transaction-type="@transaction.TransactionType">
-                <i class="bi bi-trash"></i> Удалить
-            </button>
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteModal"
+                            data-transaction-id="@transaction.Id"
+                            data-transaction-amount="@transaction.Amount.ToString("C")"
+                            data-transaction-type="@transaction.TransactionType">
+                        <i class="bi bi-trash"></i> Удалить
+                    </button>
                 </td>
             </tr>
         }
@@ -128,7 +138,7 @@
     </table>
 </div>
 
-<!-- Модальное окно подтверждения удаления -->
+<!-- Модальное окно подтверждения удаления (существующий код) -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -138,18 +148,18 @@
             </div>
             <div class="modal-body">
                 <p>Вы уверены, что хотите удалить эту транзакцию? Это действие нельзя отменить.</p>
-                
+
                 <dl class="row">
                     <dt class="col-sm-4">ID транзакции</dt>
-            <dd class="col-sm-8" id="modalTransactionId">-</dd>
-            
-            <dt class="col-sm-4">Тип</dt>
-            <dd class="col-sm-8">
-                <span id="modalTransactionType" class="badge"></span>
-            </dd>
-            
-            <dt class="col-sm-4">Сумма</dt>
-            <dd class="col-sm-8" id="modalTransactionAmount">-</dd>
+                    <dd class="col-sm-8" id="modalTransactionId">-</dd>
+
+                    <dt class="col-sm-4">Тип</dt>
+                    <dd class="col-sm-8">
+                        <span id="modalTransactionType" class="badge"></span>
+                    </dd>
+
+                    <dt class="col-sm-4">Сумма</dt>
+                    <dd class="col-sm-8" id="modalTransactionAmount">-</dd>
                 </dl>
             </div>
             <div class="modal-footer">
@@ -166,6 +176,95 @@
     </div>
 </div>
 
+<!-- Модальное окно расчёта заработной платы (новый код) -->
+<div class="modal fade" id="salaryCalcModal" tabindex="-1" aria-labelledby="salaryCalcModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="salaryCalcModalLabel">Расчёт заработной платы</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="salaryCalcForm" asp-controller="EmployeeSalaryCalculation" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Левая колонка: выбор сотрудника и период -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Сотрудник <span class="text-danger">*</span></label>
+                                <select class="form-select" id="employeeSelect" name="EmployeeId" required>
+                                    <option value="">Выберите сотрудника</option>
+                                    @if (ViewBag.Employees != null)
+                                    {
+                                        @foreach (var employee in (List<FreedomDanceStudio.Models.Employee>)ViewBag.Employees)
+                                        {
+                                            <option value="@employee.Id">@employee.FirstName @employee.LastName</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+            <div class="row mb-3">
+                <div class="col">
+            <label class="form-label">Дата от <span class="text-danger">*</span></label>
+            <input type="datetime-local" class="form-control" id="startDate" name="StartDate" required />
+                </div>
+                <div class="col">
+            <label class="form-label">Дата до <span class="text-danger">*</span></label>
+            <input type="datetime-local" class="form-control" id="endDate" name="EndDate" required />
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая колонка: финансовые данные -->
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Тип оплаты</label>
+                <input type="text" class="form-control" value="За час" readonly />
+                <input type="hidden" name="PaymentType" value="Hourly" />
+            </div>
+
+            <div class="row mb-3">
+                <div class="col">
+            <label class="form-label">Ставка за час <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" id="hourlyRate" name="HourlyRate" step="0.01" required readonly />
+                </div>
+                <div class="col">
+            <label class="form-label">Всего часов <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" id="totalHours" name="TotalHours" step="0.01" required readonly
+                   data-val="true"
+                   data-val-number="Поле 'Всего часов' должно быть числом." />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Итого к выплате <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" id="totalAmount" name="TotalAmount" step="0.01" required readonly />
+            </div>
+        </div>
+    </div>
+
+    <!-- Примечания -->
+    <div class="alert alert-info">
+        <small>
+            <i class="bi bi-info-circle"></i> Поля со значком <span class="text-danger">*</span> обязательны для заполнения.<br>
+            Поля «Ставка за час», «Всего часов» и «Итого к выплате» заполняются автоматически.
+        </small>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="submit" class="btn btn-primary">
+        <i class="bi bi-check-circle"></i> Сохранить расчёт
+    </button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+</div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/finance/finance-page.js"></script>
+    <script src="~/js/salary-calc.js"></script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

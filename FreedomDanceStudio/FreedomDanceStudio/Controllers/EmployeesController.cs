@@ -147,4 +147,23 @@ public class EmployeesController: Controller
         await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
+    
+    // GET: /Employees/GetEmployeeData/1
+    [HttpGet]
+    [Produces("application/json")]
+    public async Task<IActionResult> GetEmployeeData(int id)
+    {
+        var employee = await _context.Employees
+            .Where(e => e.Id == id)
+            .Select(e => new
+            {
+                e.Salary
+            })
+            .FirstOrDefaultAsync();
+
+        if (employee == null)
+            return NotFound();
+
+        return Json(employee);
+    }
 }

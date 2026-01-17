@@ -186,4 +186,18 @@ public class EmployeeWorkHoursController : Controller
 
     private bool EmployeeWorkHoursExists(int id) =>
         _context.EmployeeWorkHours.Any(e => e.Id == id);
+    
+    // GET: /EmployeeWorkHours/GetHoursForPeriod?employeeId=1&startDate=...&endDate=...
+    [HttpGet]
+    [Produces("application/json")]
+    public async Task<IActionResult> GetHoursForPeriod(int employeeId, DateTime startDate, DateTime endDate)
+    {
+        var totalHours = await _context.EmployeeWorkHours
+            .Where(wh => wh.EmployeeId == employeeId &&
+                         wh.WorkDate >= startDate &&
+                         wh.WorkDate <= endDate)
+            .SumAsync(wh => (decimal?)wh.HoursCount) ?? 0;
+
+        return Json(totalHours);
+    }
 }
