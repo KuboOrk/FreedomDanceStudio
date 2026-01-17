@@ -20,62 +20,45 @@ document.querySelectorAll('input[type="date"]').forEach(input => {
 // Обработчик открытия модального окна
 // Ждём полной загрузки DOM
 document.addEventListener('DOMContentLoaded', function() {
-    // Находим все кнопки удаления
-    const deleteButtons = document.querySelectorAll('[data-bs-toggle="modal"]');
-
+    // Находим ТОЛЬКО кнопки удаления с классом .delete-button
+    const deleteButtons = document.querySelectorAll('.delete-button');
     const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
 
-    // Обработчик для каждой кнопки
     deleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function(e) {
+            // Гарантируем, что это именно кнопка удаления
+            if (!this.classList.contains('delete-button')) return;
+
+            e.preventDefault(); // Предотвращаем побочные эффекты
+
             try {
-                // Получаем данные из атрибутов кнопки
                 const transactionId = this.getAttribute('data-transaction-id');
                 const amount = this.getAttribute('data-transaction-amount');
                 const type = this.getAttribute('data-transaction-type');
 
-                // Проверяем существование элементов перед заполнением
-                const idElement = document.getElementById('modalTransactionId');
-                const amountElement = document.getElementById('modalTransactionAmount');
+                // Заполняем поля модального окна
+                document.getElementById('modalTransactionId').textContent = transactionId;
+                document.getElementById('modalTransactionAmount').textContent = amount;
                 const typeElement = document.getElementById('modalTransactionType');
-                const hiddenId = document.getElementById('hiddenTransactionId');
+                typeElement.textContent = type;
+                typeElement.className = 'badge ' + (type === 'Income' ? 'bg-success' : 'bg-danger');
+                document.getElementById('hiddenTransactionId').value = transactionId;
 
-                if (idElement && amountElement && typeElement && hiddenId) {
-                    // Заполняем ID и сумму
-                    idElement.textContent = transactionId;
-                    amountElement.textContent = amount;
-
-                    // Заполняем тип с правильной стилизацией
-                    typeElement.textContent = type;
-                    typeElement.className = 'badge ' + (type === 'Income' ? 'bg-success' : 'bg-danger');
-
-                    // Устанавливаем ID в скрытое поле формы
-                    hiddenId.value = transactionId;
-
-                    // Открываем модальное окно
-                    modal.show();
-                } else {
-                    console.error('Не удалось найти элементы модального окна');
-                }
+                // Открываем ТОЛЬКО окно удаления
+                modal.show();
             } catch (error) {
                 console.error('Ошибка при открытии модального окна:', error);
             }
         });
     });
 
-    // Очистка при закрытии модального окна
+    // Очистка при закрытии модального окна удаления
     document.getElementById('deleteModal').addEventListener('hidden.bs.modal', function () {
-        const idElement = document.getElementById('modalTransactionId');
-        const amountElement = document.getElementById('modalTransactionAmount');
+        document.getElementById('modalTransactionId').textContent = '-';
+        document.getElementById('modalTransactionAmount').textContent = '-';
         const typeElement = document.getElementById('modalTransactionType');
-        const hiddenId = document.getElementById('hiddenTransactionId');
-
-        if (idElement && amountElement && typeElement && hiddenId) {
-            idElement.textContent = '-';
-            amountElement.textContent = '-';
-            typeElement.textContent = '';
-            typeElement.className = 'badge';
-            hiddenId.value = '';
-        }
+        typeElement.textContent = '';
+        typeElement.className = 'badge';
+        document.getElementById('hiddenTransactionId').value = '';
     });
 });

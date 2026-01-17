@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // --- Инициализация элементов формы ---
     const form = document.getElementById('salaryCalcForm');
     const employeeSelect = document.getElementById('employeeSelect');
     const startDateInput = document.getElementById('startDate');
@@ -7,13 +8,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalHoursInput = document.getElementById('totalHours');
     const totalAmountInput = document.getElementById('totalAmount');
 
-    // Установка текущих дат по умолчанию
+    // --- Обработчик для кнопки «Рассчитать ЗП» ---
+    const openSalaryCalcBtn = document.getElementById('openSalaryCalcBtn');
+    if (openSalaryCalcBtn) {
+        openSalaryCalcBtn.addEventListener('click', function() {
+            // Создаём экземпляр модального окна (только при клике)
+            const salaryModal = new bootstrap.Modal(document.getElementById('salaryCalcModal'));
+            // Открываем окно расчёта ЗП
+            salaryModal.show();
+        });
+    } else {
+        console.warn('Кнопка #openSalaryCalcBtn не найдена в DOM');
+    }
+
+    // --- Установка текущих дат по умолчанию ---
     const now = new Date();
     const utcNow = new Date(now.toISOString());
     startDateInput.value = utcNow.toISOString().slice(0, 16);
     endDateInput.value = utcNow.toISOString().slice(0, 16);
 
-    // Обработчик выбора сотрудника
+    // --- Обработчик выбора сотрудника ---
     employeeSelect.addEventListener('change', function() {
         if (this.value) {
             fetch(`/Employees/GetEmployeeData/${this.value}`)
@@ -39,12 +53,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Обработчики изменения дат
+    // --- Обработчики изменения дат ---
     startDateInput.addEventListener('change', updateHoursAndAmount);
     endDateInput.addEventListener('change', updateHoursAndAmount);
 
+    // --- Функция обновления часов и суммы ---
     function updateHoursAndAmount() {
-
         if (!employeeSelect.value || !startDateInput.value || !endDateInput.value) {
             return;
         }
@@ -60,14 +74,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 totalAmountInput.value = (rate * hours).toFixed(2);
             })
             .catch(error => {
+                console.error('Ошибка при получении часов:', error);
                 totalHoursInput.value = '0.00';
                 totalAmountInput.value = '0.00';
             });
     }
 
-    // Обработчик отправки формы
+    // --- Обработчик отправки формы ---
     form.addEventListener('submit', function(e) {
-
         // Проверка выбора сотрудника
         if (!employeeSelect.value) {
             e.preventDefault();
