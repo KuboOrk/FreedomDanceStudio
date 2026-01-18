@@ -107,6 +107,11 @@ public interface IExpiryAlertService
 
         if (sale == null) return;
 
+        // Нормализация даты окончания в UTC
+        var endDateUtc = sale.EndDate.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(sale.EndDate, DateTimeKind.Utc)
+            : sale.EndDate.ToUniversalTime();
+
         // Расчёт использования
         var usedVisits = sale.Visits?.Count ?? 0;
         var maxVisits = sale.MaxVisits;
@@ -125,6 +130,7 @@ public interface IExpiryAlertService
             existingAlert.MaxVisits = maxVisits;
             existingAlert.UsagePercent = usagePercent;
             existingAlert.AlertLevel = alertLevel;
+            existingAlert.ExpiryDate = endDateUtc; // Явное обновление даты
             existingAlert.UpdatedAt = DateTime.UtcNow;
         }
         else
@@ -133,9 +139,7 @@ public interface IExpiryAlertService
             {
                 ClientId = sale.ClientId,
                 AbonnementSaleId = sale.Id,
-                ExpiryDate = sale.EndDate.Kind == DateTimeKind.Unspecified
-                    ? DateTime.SpecifyKind(sale.EndDate, DateTimeKind.Utc)
-                    : sale.EndDate.ToUniversalTime(),
+                ExpiryDate = endDateUtc,
                 UsedVisits = usedVisits,
                 MaxVisits = maxVisits,
                 UsagePercent = usagePercent,

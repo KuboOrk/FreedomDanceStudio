@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 using FreedomDanceStudio.Attributes;
 using Microsoft.EntityFrameworkCore;
 using FreedomDanceStudio.Data;
@@ -29,6 +30,14 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.SupportedCultures = new List<CultureInfo> { cultureInfo };
     options.SupportedUICultures = new List<CultureInfo> { cultureInfo };
 });
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        // Или ReferenceHandler.Preserve — см. примечание ниже
+        options.JsonSerializerOptions.WriteIndented = false; // Убрать отступы в продакшене
+    });
 
 
 // 2. Сессии — добавляем ДО аутентификации
