@@ -212,16 +212,23 @@ function showErrorMessage(message) {
 // Обновление всех але́ртов (существующий код с улучшениями)
 async function refreshAllAbonnementAlerts() {
     try {
+        const container = document.getElementById('allAbonnementAlertsContainer');
+
+        // Если контейнер уже заполнен серверными данными и не пустой, не обновляем сразу
+        if (container.innerHTML.trim() !== '' && !container.querySelector('.loading')) {
+            console.log('Server data present, skipping immediate refresh');
+            return;
+        }
+
+        // Добавляем индикатор загрузки
+        container.innerHTML = '<div class="col-12"><div class="alert alert-info">Загрузка...</div></div>';
+
         console.log('Fetching alerts from /Home/GetAllAbonnementAlerts...');
         const response = await fetch('/Home/GetAllAbonnementAlerts');
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const alerts = await response.json();
-        console.log('Received alerts:', alerts);
-
         updateAllAbonnementAlertsDisplay(alerts);
     } catch (error) {
         console.error('Error refreshing all abonnement alerts:', error);
