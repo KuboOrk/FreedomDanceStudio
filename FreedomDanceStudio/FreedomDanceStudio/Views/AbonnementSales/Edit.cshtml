@@ -31,12 +31,12 @@
                     <span asp-validation-for="ServiceId" class="text-danger"></span>
                 </div>
 
-                <!-- Дата продажи (только для чтения) -->
+                <!-- Дата продажи (редактируемая) -->
                 <div class="mb-3">
                     <label asp-for="SaleDate" class="form-label">Дата продажи</label>
                     <input asp-for="SaleDate" type="date" class="form-control"
-                           asp-format="{0:yyyy-MM-dd}"
-                           value="@Model.SaleDate.ToString("yyyy-MM-dd")"/>
+                           value="@Model.SaleDate.ToString("yyyy-MM-dd")"
+                           required />
                     <span asp-validation-for="SaleDate" class="text-danger"></span>
                 </div>
 

@@ -314,89 +314,166 @@ public class AbonnementSalesController : Controller
     #endregion
 
     #region Обработка сохранения изменений
+    
+        // POST: /AbonnementSales/Edit/5
+[HttpPost]
+[ValidateAntiForgeryToken]
+[Authorize(Roles = "Admin")]
+public async Task<IActionResult> Edit(int id, AbonnementSale sale)
+{
+    if (id != sale.Id)
+        return NotFound();
 
-    // POST: /AbonnementSales/Edit/5
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Edit(int id, AbonnementSale sale)
+    if (ModelState.IsValid)
     {
-        if (id != sale.Id)
-            return NotFound();
-
-        if (ModelState.IsValid)
+        try
         {
-            try
+            var existingSale = await _context.AbonnementSales
+                .Include(s => s.FinancialTransactions)
+                .Include(s => s.Visits)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (existingSale == null)
+                return NotFound();
+
+            // Валидация MaxVisits
+            if (sale.MaxVisits < existingSale.Visits.Count)
             {
-                var existingSale = await _context.AbonnementSales
-                    .FirstOrDefaultAsync(s => s.Id == id);
+                ModelState.AddModelError("MaxVisits",
+                    $"Нельзя установить лимит {sale.MaxVisits} — уже использовано {existingSale.Visits.Count} посещений");
+                return View(await ReloadViewData(sale));
+            }
 
-                if (existingSale == null)
-                    return NotFound();
+            var strategy = _context.Database.CreateExecutionStrategy();
+            bool success = false;
 
-                // Валидация MaxVisits
-                if (sale.MaxVisits < 0)
+            await strategy.ExecuteAsync(async () =>
+            {
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
                 {
-                    ModelState.AddModelError("MaxVisits", "Количество посещений не может быть отрицательным");
-                    return View(await ReloadViewData(sale));
-                }
+                    // Обновляем поля из модели
+                    existingSale.ClientId = sale.ClientId;
+                    existingSale.ServiceId = sale.ServiceId;
+                    existingSale.MaxVisits = sale.MaxVisits;
 
-                // Сохраняем неизменные поля
-                existingSale.ClientId = sale.ClientId;
-                existingSale.ServiceId = sale.ServiceId;
-                existingSale.MaxVisits = sale.MaxVisits;
+                    // Конвертируем даты в UTC
+            existingSale.SaleDate = DateTime.SpecifyKind(sale.SaleDate, DateTimeKind.Utc);
+            existingSale.StartDate = DateTime.SpecifyKind(sale.StartDate, DateTimeKind.Utc);
+            existingSale.EndDate = DateTime.SpecifyKind(sale.EndDate, DateTimeKind.Utc);
 
-                var entry = _context.Entry(existingSale);
+            var entry = _context.Entry(existingSale);
 
-                // Если услуга изменилась — пересчитываем EndDate на основе StartDate из модели
-                if (entry.Property(e => e.ServiceId).IsModified)
+            // Если услуга изменилась — пересчитываем EndDate
+            if (entry.Property(e => e.ServiceId).IsModified)
+            {
+                var service = await _context.Services.FindAsync(sale.ServiceId);
+                if (service != null)
                 {
-                    var service = await _context.Services.FindAsync(sale.ServiceId);
-                    if (service != null)
-                    {
-                        // Берём StartDate из модели (может быть изменён пользователем)
-                        existingSale.StartDate = DateTime.SpecifyKind(
-                            (sale.StartDate == default ? DateTime.UtcNow.Date : sale.StartDate),
-                            DateTimeKind.Utc);
-
-                        // Пересчитываем EndDate в UTC
-                existingSale.EndDate = DateTime.SpecifyKind(
-                    existingSale.StartDate.AddDays(service.DurationDays),
-                    DateTimeKind.Utc);
+                    existingSale.EndDate = DateTime.SpecifyKind(
+                existingSale.StartDate.AddDays(service.DurationDays),
+                DateTimeKind.Utc);
             }
             else
             {
                 ModelState.AddModelError("ServiceId", "Выбранная услуга не найдена!");
-                return View(await ReloadViewData(sale));
+                throw new InvalidOperationException("Услуга не найдена");
             }
         }
-        else
+
+        // Сохраняем изменения продажи
+        await _context.SaveChangesAsync();
+
+        // Синхронизация транзакции дохода — теперь с обновлением даты
+        var incomeTransaction = existingSale.FinancialTransactions
+            .FirstOrDefault(t => t.TransactionType == "Income");
+
+        if (incomeTransaction != null)
         {
-            // Если услуга не менялась, сохраняем даты из модели в UTC
-            existingSale.StartDate = DateTime.SpecifyKind(sale.StartDate, DateTimeKind.Utc);
-            existingSale.EndDate = DateTime.SpecifyKind(sale.EndDate, DateTimeKind.Utc);
+            var currentService = await _context.Services.FindAsync(existingSale.ServiceId);
+            if (currentService != null)
+            {
+                bool shouldUpdate = false;
+
+                // Всегда обновляем дату транзакции при изменении SaleDate
+                if (incomeTransaction.TransactionDate != existingSale.SaleDate)
+                {
+                    incomeTransaction.TransactionDate = existingSale.SaleDate;
+            shouldUpdate = true;
         }
 
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
-    }
-    catch (DbUpdateConcurrencyException ex)
-    {
-        ModelState.AddModelError("", $"Ошибка параллельного изменения: {ex.Message}");
-        _logger.LogWarning(ex, "Конфликт параллельного изменения при редактировании продажи ID: {Id}", id);
-        return View(await ReloadViewData(sale));
-    }
-    catch (Exception ex)
-    {
-        ModelState.AddModelError("", $"Ошибка при сохранении: {ex.Message}");
-        _logger.LogError(ex, "Ошибка при редактировании продажи абонемента ID: {Id}", id);
-        return View(await ReloadViewData(sale));
-    }
-    }
+        // Обновляем сумму и описание, если цена изменилась
+        if (incomeTransaction.Amount != currentService.Price)
+        {
+            incomeTransaction.Amount = currentService.Price;
+            incomeTransaction.Description = $"Продажа абонемента: {currentService.Name}";
+            shouldUpdate = true;
+        }
 
-    // Если ModelState невалиден, перезагружаем списки и возвращаем форму с ошибками
-    return View(await ReloadViewData(sale));
+        // Сохраняем, только если есть изменения
+        if (shouldUpdate)
+        {
+            await _context.SaveChangesAsync();
+        }
     }
+}
+else
+{
+    // Если транзакции нет — создаём новую
+    var service = await _context.Services.FindAsync(existingSale.ServiceId);
+    if (service != null)
+    {
+    var newIncomeTransaction = new FinancialTransaction
+    {
+        TransactionType = "Income",
+        Amount = service.Price,
+        Description = $"Продажа абонемента: {service.Name}",
+        TransactionDate = existingSale.SaleDate,
+        AbonnementSaleId = existingSale.Id,
+        IsManual = false
+    };
+    _context.FinancialTransactions.Add(newIncomeTransaction);
+    await _context.SaveChangesAsync();
+}
+}
+
+// Обновляем але́рты
+await _alertService.UpdateExpiryAlertForSaleAsync(existingSale.Id);
+
+await transaction.CommitAsync();
+success = true;
+}
+catch (Exception ex)
+{
+await transaction.RollbackAsync();
+throw;
+}
+});
+
+if (success)
+{
+TempData["SuccessMessage"] = "Изменения сохранены успешно";
+return RedirectToAction(nameof(Index));
+}
+// Обработка ошибок
+ModelState.AddModelError("", "Не удалось сохранить изменения из‑за внутренней ошибки");
+_logger.LogError("Транзакция не завершена успешно для абонемента ID: {Id}", id);
+return View(await ReloadViewData(sale));
+}
+catch (InvalidOperationException ex) when (ex.Message == "Услуга не найдена")
+{
+return View(await ReloadViewData(sale));
+}
+catch (Exception ex)
+{
+ModelState.AddModelError("", $"Ошибка при сохранении: {ex.Message}");
+_logger.LogError(ex, "Ошибка при редактировании продажи абонемента ID: {Id}", id);
+return View(await ReloadViewData(sale));
+}
+}
+
+return View(await ReloadViewData(sale));
+}
 
     #endregion
 
