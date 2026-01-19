@@ -1,9 +1,43 @@
 // Обновление статистики при фильтрации
 function refreshFinanceStats() {
-    const startDate = document.querySelector('input[name="startDate"]').value;
-    const endDate = document.querySelector('input[name="endDate"]').value;
+    const startDateInput = document.querySelector('input[name="startDate"]');
+    const endDateInput = document.querySelector('input[name="endDate"]');
 
-    fetch(`/Finance?startDate=${startDate}&endDate=${endDate}`)
+    let startDate, endDate;
+
+    // Если поля пустые — используем текущий месяц в локальном времени
+    if (!startDateInput.value) {
+        const now = new Date();
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1); // Первый день месяца
+    } else {
+        startDate = new Date(startDateInput.value);
+    }
+
+    if (!endDateInput.value) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        endDate = new Date(year, month, daysInMonth); // Последний день месяца
+    } else {
+        endDate = new Date(endDateInput.value);
+    }
+
+    // Конвертируем в UTC для передачи в запрос
+    const utcStartDate = new Date(Date.UTC(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate()
+    ));
+    const utcEndDate = new Date(Date.UTC(
+        endDate.getFullYear(),
+        endDate.getMonth(),
+        endDate.getDate(),
+        23, 59, 59 // Включаем весь последний день
+    ));
+
+    // Формируем строку запроса с датами в формате ISO 8601 (UTC)
+    fetch(`/Finance?startDate=${utcStartDate.toISOString().split('T')[0]}&endDate=${utcEndDate.toISOString().split('T')[0]}`)
         .then(response => response.text())
         .then(html => {
             document.querySelector('.container.mt-4').innerHTML =

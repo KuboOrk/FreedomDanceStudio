@@ -23,49 +23,73 @@ public class FinanceController : Controller
 
     // GET: /Finance
     [HttpGet]
-    public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate)
-    {
-        // Загрузка списка сотрудников для модального окна
-        var employees = await _context.Employees
-            .Select(e => new Employee
-            {
-                Id = e.Id,
-                FirstName = e.FirstName,
-                LastName = e.LastName
-            })
-            .ToListAsync();
-        ViewBag.Employees = employees;
-        
-        var query = _context.FinancialTransactions
-            .Include(t => t.AbonnementSale)
-            .AsQueryable();
-
-        // Фильтрация по периоду
-        if (startDate.HasValue)
-            query = query.Where(t => t.TransactionDate >= startDate.Value);
-        if (endDate.HasValue)
-            query = query.Where(t => t.TransactionDate <= endDate.Value);
-
-        var transactions = await query.OrderByDescending(t => t.TransactionDate).ToListAsync();
-
-        // Сводная статистика
-        var stats = new
+    [HttpGet]
+[HttpGet]
+public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate)
+{
+    // Загрузка списка сотрудников для модального окна
+    var employees = await _context.Employees
+        .Select(e => new Employee
         {
-            TotalIncome = transactions.Where(t => t.TransactionType == "Income").Sum(t => t.Amount),
-            TotalExpense = transactions.Where(t => t.TransactionType == "Expense").Sum(t => t.Amount),
-            Balance = transactions
-                .Where(t => t.TransactionType == "Income")
-                .Sum(t => t.Amount) -
-                transactions.Where(t => t.TransactionType == "Expense")
-                .Sum(t => t.Amount)
-        };
+            Id = e.Id,
+            FirstName = e.FirstName,
+            LastName = e.LastName
+        })
+        .ToListAsync();
+    ViewBag.Employees = employees;
 
-        ViewBag.Stats = stats;
-        ViewBag.StartDate = startDate;
-        ViewBag.EndDate = endDate;
+    var query = _context.FinancialTransactions
+        .Include(t => t.AbonnementSale)
+        .AsQueryable();
 
-        return View(transactions);
+    // Если пользователь не задал даты — фильтруем по текущему месяцу
+    if (!startDate.HasValue && !endDate.HasValue)
+    {
+        var currentYear = DateTime.UtcNow.Year;
+        var currentMonth = DateTime.UtcNow.Month;
+
+        // Первый день месяца в UTC
+        startDate = new DateTime(currentYear, currentMonth, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        // Последний день месяца в UTC (более надёжный расчёт)
+        var daysInMonth = DateTime.DaysInMonth(currentYear, currentMonth);
+        endDate = new DateTime(currentYear, currentMonth, daysInMonth, 23, 59, 59, DateTimeKind.Utc);
     }
+    else
+    {
+        // Конвертируем переданные пользователем даты в UTC
+        if (startDate.HasValue && startDate.Value.Kind != DateTimeKind.Utc)
+            startDate = DateTime.SpecifyKind(startDate.Value, DateTimeKind.Utc);
+        if (endDate.HasValue && endDate.Value.Kind != DateTimeKind.Utc)
+            endDate = DateTime.SpecifyKind(endDate.Value, DateTimeKind.Utc);
+    }
+
+    // Фильтрация по периоду (уже в UTC)
+    if (startDate.HasValue)
+        query = query.Where(t => t.TransactionDate >= startDate.Value);
+    if (endDate.HasValue)
+        query = query.Where(t => t.TransactionDate <= endDate.Value);
+
+    var transactions = await query.OrderByDescending(t => t.TransactionDate).ToListAsync();
+
+    // Сводная статистика (только по отфильтрованным транзакциям)
+    var stats = new
+    {
+        TotalIncome = transactions.Where(t => t.TransactionType == "Income").Sum(t => t.Amount),
+        TotalExpense = transactions.Where(t => t.TransactionType == "Expense").Sum(t => t.Amount),
+        Balance = transactions
+            .Where(t => t.TransactionType == "Income")
+            .Sum(t => t.Amount) -
+            transactions.Where(t => t.TransactionType == "Expense")
+            .Sum(t => t.Amount)
+    };
+
+    ViewBag.Stats = stats;
+    ViewBag.StartDate = startDate;
+    ViewBag.EndDate = endDate;
+
+    return View(transactions);
+}
 
     // GET: /Finance/Create
     [HttpGet("Create")]

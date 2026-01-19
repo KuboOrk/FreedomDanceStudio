@@ -41,12 +41,12 @@
             <div class="col-md-3">
                 <label>Начало периода</label>
                 <input type="date" name="startDate" class="form-control"
-                       value="@(ViewBag.StartDate?.ToString("yyyy-MM-dd") ?? "")">
+                       value="@(ViewBag.StartDate?.ToString("yyyy-MM-dd") ?? DateTime.UtcNow.ToString("yyyy-01-01"))">
             </div>
             <div class="col-md-3">
                 <label>Конец периода</label>
                 <input type="date" name="endDate" class="form-control"
-                       value="@(ViewBag.EndDate?.ToString("yyyy-MM-dd") ?? "")">
+                       value="@(ViewBag.EndDate?.ToString("yyyy-MM-dd") ?? DateTime.UtcNow.AddMonths(1).AddDays(-1).ToString("yyyy-MM-dd"))">
             </div>
             <div class="col-md-2">
                 <button type="submit" class="btn btn-primary mt-4">Применить</button>
