@@ -143,11 +143,11 @@ async function markVisitAndRefresh(abonnementSaleId) {
         const result = await response.json();
 
         if (result.success) {
-            // Если але́рт вернулся в ответе, обновляем его в DOM
+            // Обновляем конкретный алерт, если данные пришли в ответе
             if (result.alertData) {
                 updateSingleAlertDisplay(result.alertData);
             } else {
-                // Иначе полностью обновляем все але́рты
+                // Иначе обновляем все але́рты на странице
                 await refreshAllAbonnementAlerts();
             }
             showSuccessMessage(result.message);

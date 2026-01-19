@@ -6,7 +6,6 @@ namespace FreedomDanceStudio.Attributes;
 
 public interface IExpiryAlertService
 {
-    Task UpdateExpiryAlertsAsync();
     Task<List<AbonnementExpiryAlert>> GetUpcomingExpiryAlertsAsync(int days = 30);
     Task UpdateExpiryAlertForSaleAsync(int saleId);
     Task<List<AbonnementExpiryAlert>> GetAllAbonnementAlertsAsync(); // Новый метод
@@ -20,63 +19,6 @@ public interface IExpiryAlertService
     {
         _context = context;
     }
-
-    public async Task UpdateExpiryAlertsAsync()
-    {
-        var today = DateTime.UtcNow.Date;
-        var sales = await _context.AbonnementSales
-            .Include(s => s.Client)
-            .Include(s => s.Visits)
-            .Where(s => !s.IsDeleted) // фильтруем только активные продажи
-            .ToListAsync();
-
-        foreach (var sale in sales)
-        {
-            // Нормализуем EndDate к UTC
-            var endDateUtc = sale.EndDate.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(sale.EndDate, DateTimeKind.Utc)
-                : sale.EndDate.ToUniversalTime();
-
-            // Расчёт использования абонемента
-            var usedVisits = sale.Visits?.Count ?? 0;
-            var maxVisits = sale.MaxVisits;
-            decimal usagePercent = maxVisits > 0
-                ? Math.Round((decimal)usedVisits / maxVisits * 100m, 2) // 100m — decimal-литерал
-                : 0m;
-
-            var alertLevel = GetAlertLevelByUsage(usagePercent);
-
-            var existingAlert = await _context.AbonnementExpiryAlerts
-                .FirstOrDefaultAsync(a => a.AbonnementSaleId == sale.Id);
-
-            if (existingAlert != null)
-            {
-                existingAlert.UsedVisits = usedVisits;
-                existingAlert.MaxVisits = maxVisits;
-                existingAlert.UsagePercent = usagePercent;
-                existingAlert.AlertLevel = alertLevel;
-                existingAlert.UpdatedAt = DateTime.UtcNow;
-            }
-            else
-            {
-                _context.AbonnementExpiryAlerts.Add(new AbonnementExpiryAlert
-                {
-                    ClientId = sale.ClientId,
-                    AbonnementSaleId = sale.Id,
-                    ExpiryDate = endDateUtc,
-                    UsedVisits = usedVisits,
-                    MaxVisits = maxVisits,
-                    UsagePercent = usagePercent,
-                    AlertLevel = alertLevel,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                });
-            }
-        }
-
-        await _context.SaveChangesAsync();
-    }
-
 
     private string GetAlertLevelByUsage(decimal usagePercent)
     {
