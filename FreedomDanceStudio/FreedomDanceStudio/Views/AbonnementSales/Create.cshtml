@@ -16,7 +16,9 @@
                 <div class="mb-3">
                     <label asp-for="ClientId" class="form-label">Клиент</label>
                     <select asp-for="ClientId" asp-items="ViewBag.Clients"
-                            class="form-select" required>
+                            class="form-select selectpicker"
+                            data-live-search="true"
+                            required>
                         <option value="">-- Выберите клиента --</option>
                     </select>
                     <span asp-validation-for="ClientId" class="text-danger"></span>

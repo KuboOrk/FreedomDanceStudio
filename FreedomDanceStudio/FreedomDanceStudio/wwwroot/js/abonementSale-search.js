@@ -62,6 +62,9 @@ document.addEventListener('DOMContentLoaded', function() {
     /**
      * Обновляет видимость строк и текст в текстовых ячейках (не трогает формы и кнопки)
      */
+    /**
+     * Обновляет видимость строк и текст в текстовых ячейках (не трогает формы и кнопки)
+     */
     function updateTableVisibility(sales) {
         const allRows = tableBody.querySelectorAll('tr');
         const saleIds = new Set(sales.map(s => s.id));
@@ -83,16 +86,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const row = tableBody.querySelector(`tr[data-sale-id="${sale.id}"]`);
             if (row) {
                 row.style.display = '';
-                // Обновляем текст только в первых шести ячейках (без действий и посещений)
+                // Обновляем текст начиная с первой ячейки (теперь это «Клиент»)
                 const textCells = row.querySelectorAll('td:not(:nth-last-child(-n+2))');
-                textCells[0].textContent = sale.id;
-                textCells[1].textContent = sale.clientName;
-                textCells[2].textContent = sale.serviceName;
-                textCells[3].textContent = sale.saleDate;
-                textCells[4].textContent = sale.startDate;
-                textCells[5].textContent = sale.endDate;
+                textCells[0].textContent = sale.clientName;     // Клиент (было textCells[1])
+                textCells[1].textContent = sale.serviceName;   // Услуга (было textCells[2])
+                textCells[2].textContent = sale.saleDate;     // Дата продажи (было textCells[3])
+                textCells[3].textContent = sale.startDate;    // Начало действия (было textCells[4])
+                textCells[4].textContent = sale.endDate;     // Окончание действия (было textCells[5])
 
-                // Обновляем счётчик посещений в 7‑й ячейке
+                // Обновляем счётчик посещений в 6‑й ячейке (индекс 5)
                 const visitBadge = row.querySelector('.badge.bg-primary');
                 if (visitBadge) {
                     visitBadge.textContent = sale.visitCount;

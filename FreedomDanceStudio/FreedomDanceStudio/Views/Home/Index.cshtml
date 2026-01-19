@@ -64,3 +64,69 @@
         </div>
     </div>
 </section>
+
+<!-- Блок: Все абонементы (серверная отрисовка + AJAX‑обновление) -->
+<section class="container py-4">
+    <h3 class="mb-3">Все абонементы</h3>
+    <div class="row" id="allAbonnementAlertsContainer">
+        @if (Model.AllAbonnementAlerts != null && Model.AllAbonnementAlerts.Count > 0)
+        {
+            @foreach (var alert in Model.AllAbonnementAlerts)
+            {
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card alert-card @(alert.AlertLevel.ToLower())">
+                        <div class="card-body">
+                            <h5 class="card-title">@alert.Client?.FirstName @alert.Client?.LastName</h5>
+                            <p class="card-text">
+                                Абонемент истекает: <strong>@alert.ExpiryDate.ToString("dd.MM.yyyy")</strong>
+                            </p>
+                            <!-- Круговой индикатор -->
+                            <div class="circular-progress" data-percent="@alert.UsagePercent">
+                                <svg viewBox="0 0 36 36" class="circular-chart">
+                                    <path class="circle-bg"
+                                          d="M18 2.0845
+               a 15.9155 15.9155 0 0 1 0 31.831
+               a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path class="circle"
+                                          stroke-dasharray="@(((double)alert.UsagePercent / 100.0) * 2.0 * Math.PI * 15.9155), 100"
+                                          d="M18 2.0845
+               a 15.9155 15.9155 0 0 1 0 31.831
+               a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                </svg>
+                                <div class="percentage">@alert.UsagePercent%</div>
+                            </div>
+
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    Использовано: <strong>@alert.UsedVisits</strong> из <strong>@alert.MaxVisits</strong> посещений
+                                </small>
+                            </div>
+
+                            <!-- Кнопка быстрого действия -->
+                            <a asp-controller="AbonnementSales" asp-action="Edit" asp-route-id="@alert.AbonnementSaleId"
+                               class="btn btn-sm btn-outline-primary mt-2 w-100">
+                                Продлить абонемент
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    Нет абонементов в системе.
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/site.css" />
+}
+
+@section Scripts {
+    <script src="~/js/home-all-abonnement-alerts.js"></script>
+}

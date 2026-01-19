@@ -15,4 +15,7 @@ public class Employee
     [EmailAddress] public string? Email { get; set; }
 
     [Range(0, 999999.99)] public decimal Salary { get; set; }
+    
+    public ICollection<EmployeeSalaryCalculation> SalaryCalculations { get; set; } = new List<EmployeeSalaryCalculation>();
+    public ICollection<EmployeeWorkHours> WorkHours { get; set; } = new List<EmployeeWorkHours>();
 }

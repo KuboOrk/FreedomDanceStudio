@@ -1,9 +1,11 @@
+using System.Globalization;
+using System.Text.Json.Serialization;
+using FreedomDanceStudio.Attributes;
 using Microsoft.EntityFrameworkCore;
 using FreedomDanceStudio.Data;
 
-//using FreedomDanceStudio.Interfaces;
-//using FreedomDanceStudio.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,30 +17,60 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     )
 );
 
+builder.Services.AddScoped<IExpiryAlertService, ExpiryAlertService>();
+
+var cultureInfo = new CultureInfo("ru-RU");
+cultureInfo.NumberFormat.NumberDecimalSeparator = ".";
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    options.DefaultRequestCulture = new RequestCulture(cultureInfo);
+    options.SupportedCultures = new List<CultureInfo> { cultureInfo };
+    options.SupportedUICultures = new List<CultureInfo> { cultureInfo };
+});
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        // Или ReferenceHandler.Preserve — см. примечание ниже
+        options.JsonSerializerOptions.WriteIndented = false; // Убрать отступы в продакшене
+    });
+
+
 // 2. Сессии — добавляем ДО аутентификации
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Время жизни сессии без активности
-    options.Cookie.HttpOnly = true; // Защита от JS‑доступа
-    options.Cookie.IsEssential = true; // Обязательно для работы
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
 
 // 3. Аутентификация
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Account/Login"; // путь к странице входа
-        options.LogoutPath = "/Account/Logout"; // путь к выходу
-        options.AccessDeniedPath = "/Account/AccessDenied"; // при отказе в доступе
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/Login";
+        options.Cookie.HttpOnly = true;
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
     });
 
-// 4. MVC + Razor Pages (раскомментируйте нужное)
-builder.Services.AddControllersWithViews(); // Для контроллеров
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireRole("Admin"));
 
-// builder.Services.AddRazorPages(); // Для Razor Pages
+    options.AddPolicy("InstructorOrAdmin", policy =>
+        policy.RequireRole("Instructor", "Admin"));
+});
 
-// Регистрация сервиса VisitService
-//builder.Services.AddScoped<IVisitService, VisitService>();
+// 4. MVC + Razor Pages
+builder.Services.AddControllersWithViews();
 
 builder.Services
     .AddHealthChecks()
@@ -62,10 +94,21 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
-app.UseSession(); // ← Добавляем сразу после UseAuthentication!
+app.UseSession();
 app.UseAuthorization();
 
-// === МАРШРУТИЗАЦИЯ (современный способ) ===
+// === МАРШРУТИЗАЦИЯ ===
+
+// Перенаправление с корня на форму входа
+app.MapGet("/", (HttpContext context) =>
+{
+    if (context.User.Identity?.IsAuthenticated != true)
+        return Results.Redirect("/Account/Login");
+    return Results.Redirect("/Home/Index"); // Для авторизованных — главная
+});
+
+
+// Дефолтные маршруты для остальных случаев
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

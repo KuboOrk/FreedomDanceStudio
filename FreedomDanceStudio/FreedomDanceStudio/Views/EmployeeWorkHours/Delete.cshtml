@@ -1,0 +1,45 @@
+@model EmployeeWorkHours
+@{
+    ViewData["Title"] = $"Удалить запись для {Model.Employee?.FirstName}";
+}
+
+<div class="modal fade show d-block" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить запись?</p>
+                <dl class="row">
+                    <dt class="col-sm-4">Сотрудник:</dt>
+                    <dd class="col-sm-8">@Model.Employee?.FirstName</dd>
+
+                    <dt class="col-sm-4">Дата:</dt>
+                    <dd class="col-sm-8">@Model.WorkDate.ToString("dd.MM.yyyy")</dd>
+
+                    <dt class="col-sm-4">Посещения:</dt>
+                    <dd class="col-sm-8">@Model.VisitsCount</dd>
+
+                    <dt class="col-sm-4">Часы:</dt>
+                    <dd class="col-sm-8">@Model.HoursCount.ToString("N2")</dd>
+                </dl>
+            </div>
+            <div class="modal-footer">
+                <form asp-action="DeleteConfirmed" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" />
+                    <button type="submit" class="btn btn-danger">Удалить</button>
+                </form>
+                <a asp-action="Index" class="btn btn-secondary">Отмена</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-backdrop {
+        background-color: rgba(0,0,0,0.5);
+    }
+</style>

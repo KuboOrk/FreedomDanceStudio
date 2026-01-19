@@ -1,4 +1,4 @@
-@model IEnumerable<AbonnementSale>
+@model PagedList<AbonnementSale>
 @{
     ViewData["Title"] = "Список продаж абонементов";
 }
@@ -8,6 +8,7 @@
     <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1070;">
         <div id="liveToastContainer"></div>
     </div>
+
 
     <!-- Генерация уведомлений из TempData -->
     @if (TempData["EditError"] != null)
@@ -54,7 +55,8 @@
                    id="searchInput"
                    class="form-control form-control-lg"
                    placeholder="Введите ФИО клиента, название услуги или дату (дд.мм.гггг)..."
-                   aria-label="Поиск продаж абонементов">
+                   aria-label="Поиск продаж абонементов"
+                   value="@ViewContext.HttpContext.Request.Query["search"]">
         </div>
         <small class="text-muted mt-2">Поиск выполняется автоматически при вводе</small>
     </div>
@@ -63,13 +65,12 @@
     <table class="table table-striped table-hover">
         <thead>
         <tr>
-            <th>№</th>
             <th>Клиент</th>
             <th>Услуга</th>
             <th>Дата продажи</th>
             <th>Начало действия</th>
             <th>Окончание действия</th>
-            <th>Посещения</th> <!-- КОЛОНКА С ПОСЕЩЕНИЯМИ -->
+            <th>Посещения</th>
             <th class="text-end">Действия</th>
         </tr>
         </thead>
@@ -79,7 +80,7 @@
             <tr data-sale-id="@item.Id"
                 data-max-visits="@item.MaxVisits"
                 data-visit-count="@(item.Visits?.Count ?? 0)">
-                <td>@item.Id</td>
+                <!-- Удалена ячейка с @item.Id -->
                 <td>
                     @if (item.Client != null)
                     {
@@ -125,6 +126,7 @@
                     <!-- НОВАЯ КНОПКА: Отметить посещение -->
                     <button type="button"
                             class="btn btn-sm btn-outline-success mark-visit-btn"
+                            onclick="markVisitAndRefresh(@item.Id)"
                             data-abonnement-id="@item.Id"
                             title="Отметить посещение клиента">
                         <i class="bi bi-calendar-check"></i> Отметить
@@ -134,12 +136,59 @@
                     <form asp-action="Delete" method="post" style="display:inline;">
                         <input type="hidden" name="id" value="@item.Id"/>
                         <button type="submit" class="btn btn-sm btn-outline-danger"
-                                onclick="return confirm('Удалить запись №@item.Id?')">Удалить</button>
+                                onclick="return confirm('Удалить запись?')">Удалить</button>
                     </form>
                 </td>
             </tr>
         }
         </tbody>
+        <!-- Пагинация в нижнем колонтитуле таблицы -->
+        <tfoot>
+        <tr>
+            <td colspan="7">
+                <div class="d-flex justify-content-end align-items-center pt-3">
+                    <!-- Информация о странице -->
+                    <small class="text-muted me-3">
+                        Страница @Model.CurrentPage из @Model.TotalPages
+                    </small>
+
+                    <!-- Кнопки навигации (показываются только при возможности перехода) -->
+                    @if (Model.HasPreviousPage || Model.HasNextPage)
+                    {
+                        <nav aria-label="Навигация по страницам">
+                            <ul class="pagination mb-0">
+                                <!-- Кнопка «Назад» -->
+                                @if (Model.HasPreviousPage)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                           asp-action="Index"
+                                           asp-route-page="@(Model.CurrentPage - 1)"
+                                           asp-route-search="@ViewContext.HttpContext.Request.Query["search"]">
+                                            <i class="bi bi-arrow-left-short"></i> Назад
+                                        </a>
+                                    </li>
+                                }
+
+                                <!-- Кнопка «Вперёд» -->
+                                @if (Model.HasNextPage)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                           asp-action="Index"
+                                           asp-route-page="@(Model.CurrentPage + 1)"
+                                           asp-route-search="@ViewContext.HttpContext.Request.Query["search"]">
+                                            Вперёд <i class="bi bi-arrow-right-short"></i>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
+                    }
+                </div>
+            </td>
+        </tr>
+        </tfoot>
     </table>
 
     <!-- Сообщение об отсутствии результатов -->

@@ -39,4 +39,9 @@ public class Client
     [EmailAddress(ErrorMessage = "Введите корректный email")]
     [Display(Name = "Email")]
     public string? Email { get; set; }
+    
+    /// <summary>
+    /// Флаг удаления клиента (soft delete)
+    /// </summary>
+    public bool IsDeleted { get; set; } = false;
 }

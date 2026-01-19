@@ -1,0 +1,37 @@
+@model FreedomDanceStudio.Models.FinancialTransaction
+@{
+    ViewData["Title"] = $"Удаление транзакции №{Model.Id}";
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+    <p>Вы уверены, что хотите удалить эту транзакцию?</p>
+
+    <dl class="row">
+        <dt class="col-sm-3">Дата</dt>
+        <dd class="col-sm-9">@Model.TransactionDate.ToString("dd.MM.yyyy")</dd>
+
+        <dt class="col-sm-3">Тип</dt>
+        <dd class="col-sm-9">
+            <span class="badge @(Model.TransactionType == "Income" ? "bg-success" : "bg-danger")">
+                @Model.TransactionType
+            </span>
+        </dd>
+
+        <dt class="col-sm-3">Сумма</dt>
+        <dd class="col-sm-9">@Model.Amount.ToString("C")</dd>
+
+        <dt class="col-sm-3">Описание</dt>
+        <dd class="col-sm-9">@(Model.Description ?? "-")</dd>
+    </dl>
+
+    <form asp-action="DeleteConfirmed" method="post">
+        <input type="hidden" asp-for="Id" />
+        @Html.AntiForgeryToken()
+
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Удалить
+        </button>
+        <a asp-action="Index" class="btn btn-secondary">Отмена</a>
+    </form>
+</div>

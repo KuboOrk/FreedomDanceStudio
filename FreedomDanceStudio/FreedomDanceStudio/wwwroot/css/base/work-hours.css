@@ -1,0 +1,19 @@
+/* Стили для страницы рабочего времени */
+.work-hours-table th {
+    border-top: 2px solid #dee2e6;
+}
+
+.work-hours-form .form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}

@@ -1,0 +1,20 @@
+/* Стили для модального окна расчёта ЗП */
+#salaryCalcModal .modal-dialog {
+    max-width: 600px;
+}
+
+#salaryCalcModal .form-label {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+#salaryCalcModal .form-control[readonly] {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+}
+
+
+#salaryCalcModal .modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding: 1rem;
+}

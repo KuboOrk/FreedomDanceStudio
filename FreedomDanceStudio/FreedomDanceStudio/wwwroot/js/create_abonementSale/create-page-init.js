@@ -1,3 +1,13 @@
+$(document).ready(function() {
+    $('.selectpicker').selectpicker({
+        style: 'btn-secondary',
+        size: 10, // количество видимых опций до прокрутки
+        liveSearch: true, // активируем поиск
+        liveSearchPlaceholder: 'Поиск клиента...', // текст-плейсхолдер для поля поиска
+        dropdownAlignRight: false // выравнивание выпадающего списка
+    });
+});
+
 /**
  * Инициализация страницы создания абонемента
  */
