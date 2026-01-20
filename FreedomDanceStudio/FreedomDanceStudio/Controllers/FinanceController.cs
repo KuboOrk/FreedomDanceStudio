@@ -40,6 +40,8 @@ public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate)
 
     var query = _context.FinancialTransactions
         .Include(t => t.AbonnementSale)
+        .ThenInclude(a => a.Client)
+        .Include(t => t.EmployeeSalaryCalculation)
         .AsQueryable();
 
     // Если пользователь не задал даты — фильтруем по текущему месяцу

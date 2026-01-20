@@ -182,12 +182,18 @@ public class AbonnementSalesController : Controller
         {
             await _context.SaveChangesAsync();
 
-            // Транзакция дохода
+            var client = await _context.Clients.FindAsync(sale.ClientId);
+            if (client == null)
+            {
+                ModelState.AddModelError("ClientId", "Клиент не найден!");
+                return View(await ReloadViewData(sale));
+            }
+
             var incomeTransaction = new FinancialTransaction
             {
                 TransactionType = "Income",
                 Amount = service.Price,
-                Description = $"Продажа абонемента: {service.Name}",
+                Description = $"Продажа абонемента: {service.Name} (клиент: {client.FirstName} {client.LastName})", // Подставляем реальные значения
                 TransactionDate = sale.SaleDate,
                 AbonnementSaleId = sale.Id,
                 IsManual = false
@@ -319,7 +325,8 @@ public class AbonnementSalesController : Controller
 [HttpPost]
 [ValidateAntiForgeryToken]
 [Authorize(Roles = "Admin")]
-public async Task<IActionResult> Edit(int id, [Bind("Id,ClientId,ServiceId,SaleDate,StartDate,EndDate")] AbonnementSale sale)
+public async Task<IActionResult> Edit
+    (int id, [Bind("Id,ClientId,ServiceId,SaleDate,StartDate,EndDate")] AbonnementSale sale)
 {
     if (id != sale.Id)
         return NotFound();
@@ -390,12 +397,20 @@ public async Task<IActionResult> Edit(int id, [Bind("Id,ClientId,ServiceId,SaleD
                     // Сохраняем изменения продажи
                     await _context.SaveChangesAsync();
 
-                    // Синхронизация транзакции дохода
+                    // Синхронизация транзакции дохода — ДОРАБОТАННЫЙ БЛОК
                     var incomeTransaction = existingSale.FinancialTransactions
                         .FirstOrDefault(t => t.TransactionType == "Income");
 
                     if (incomeTransaction != null)
                     {
+                        // Явно загружаем данные клиента по ID
+                        var client = await _context.Clients.FindAsync(existingSale.ClientId);
+                        if (client == null)
+                        {
+                            ModelState.AddModelError("", "Клиент не найден — невозможно обновить описание транзакции.");
+                            throw new Exception("Клиент не найден");
+                        }
+
                         var currentService = await _context.Services.FindAsync(existingSale.ServiceId);
                         if (currentService != null)
                         {
@@ -410,9 +425,12 @@ public async Task<IActionResult> Edit(int id, [Bind("Id,ClientId,ServiceId,SaleD
                             if (incomeTransaction.Amount != currentService.Price)
                             {
                                 incomeTransaction.Amount = currentService.Price;
-                                incomeTransaction.Description = $"Продажа абонемента: {currentService.Name}";
                                 shouldUpdate = true;
                             }
+
+                            // Формируем полное описание с именем клиента
+                            incomeTransaction.Description = $"Продажа абонемента: {currentService.Name} (клиент: {client.FirstName} {client.LastName})";
+                            shouldUpdate = true;
 
                             if (shouldUpdate)
                             {
@@ -422,14 +440,17 @@ public async Task<IActionResult> Edit(int id, [Bind("Id,ClientId,ServiceId,SaleD
                     }
                     else
                     {
+                        // Если транзакции нет — создаём новую
                         var service = await _context.Services.FindAsync(existingSale.ServiceId);
-                        if (service != null)
+                        var client = await _context.Clients.FindAsync(existingSale.ClientId); // Загружаем клиента
+
+                        if (service != null && client != null)
                         {
                             var newIncomeTransaction = new FinancialTransaction
                             {
                                 TransactionType = "Income",
                                 Amount = service.Price,
-                                Description = $"Продажа абонемента: {service.Name}",
+                                Description = $"Продажа абонемента: {service.Name} (клиент: {client.FirstName} {client.LastName})", // Описание с именем клиента
                                 TransactionDate = existingSale.SaleDate,
                                 AbonnementSaleId = existingSale.Id,
                                 IsManual = false
