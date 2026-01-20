@@ -23,8 +23,6 @@ public class FinanceController : Controller
 
     // GET: /Finance
     [HttpGet]
-    [HttpGet]
-[HttpGet]
 public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate)
 {
     // Загрузка списка сотрудников для модального окна
