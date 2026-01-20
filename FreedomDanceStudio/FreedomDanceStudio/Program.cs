@@ -64,13 +64,17 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy =>
         policy.RequireRole("Admin"));
-    
+
     options.AddPolicy("InstructorOrAdmin", policy =>
         policy.RequireRole("Instructor", "Admin"));
 });
 
 // 4. MVC + Razor Pages
 builder.Services.AddControllersWithViews();
+
+builder.Services
+    .AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>();
 
 var app = builder.Build();
 
@@ -109,5 +113,9 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+app.UseHealthChecks("/health");
+
+// Если используете Razor Pages, раскомментируйте:
+// app.MapRazorPages();
 
 app.Run();
