@@ -34,7 +34,8 @@ public interface IExpiryAlertService
         return await _context.AbonnementExpiryAlerts
             .Where(a =>
                 a.ExpiryDate <= cutoffDate &&
-                a.UsagePercent >= 50m) // Только абонементы с заполнением ≥ 50 %
+                a.UsagePercent >= 50m &&
+                (a.MaxVisits == 0 || a.UsedVisits < a.MaxVisits)) // Только абонементы с заполнением ≥ 50 %
             .OrderByDescending(a => a.UsagePercent) // Сортировка по убыванию процента
             .Take(10)
             .ToListAsync();
@@ -97,10 +98,11 @@ public interface IExpiryAlertService
     {
         return await _context.AbonnementExpiryAlerts
             .Include(a => a.Client)
-            .Include(a => a.AbonnementSale) // обязательно загружаем продажу
+            .Include(a => a.AbonnementSale)
             .Where(a =>
-                a.AbonnementSale != null &&        // продажа существует
-                !a.AbonnementSale.IsDeleted)     // продажа не удалена (если есть такое поле)
+                a.AbonnementSale != null &&
+                !a.AbonnementSale.IsDeleted &&
+                (a.MaxVisits == 0 || a.UsedVisits < a.MaxVisits))
             .OrderByDescending(a => a.UsagePercent)
             .ThenByDescending(a => a.ExpiryDate)
             .ToListAsync();
