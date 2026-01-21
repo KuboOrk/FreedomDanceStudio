@@ -62,41 +62,57 @@ public class AbonnementSalesController : Controller
     [HttpGet]
     [ActionName("Search")]
     [Produces("application/json")]
-    public async Task<IActionResult> Search(string search = "")
+    public async Task<IActionResult> Search(string search = "", int page = 1)
     {
         try
         {
-            var sales = _context.AbonnementSales
+            const int pageSize = 10;
+    
+            IQueryable<AbonnementSale> query = _context.AbonnementSales
                 .Include(s => s.Client)
                 .Include(s => s.Service)
-                .Include(s => s.Visits)
-                .AsQueryable();
-
+                .Include(s => s.Visits);
+    
             if (!string.IsNullOrEmpty(search))
             {
                 search = search.ToLower();
-                sales = sales.Where(s =>
+                query = query.Where(s =>
                     (s.Client != null &&
                      ((s.Client.FirstName != null && s.Client.FirstName.ToLower().Contains(search)) ||
                       (s.Client.LastName != null && s.Client.LastName.ToLower().Contains(search)))) ||
                     (s.Service != null && s.Service.Name != null && s.Service.Name.ToLower().Contains(search)));
             }
-
-            var result = await sales.Select(s => new
+    
+            // Создаём пагинированный список
+            var pagedSales = await PagedList<AbonnementSale>.CreateAsync(query, page, pageSize);
+    
+            // Явно указываем типы в Select
+            var result = pagedSales.Select(sale => new
             {
-                Id = s.Id,
-                ClientName = s.Client != null
-                    ? $"{s.Client.FirstName ?? ""} {s.Client.LastName ?? ""}".Trim()
+                Id = sale.Id,
+                ClientName = sale.Client != null
+                    ? $"{(sale.Client.FirstName ?? "").Trim()} {(sale.Client.LastName ?? "").Trim()}"
                     : "Клиент не найден",
-                ServiceName = s.Service != null ? s.Service.Name : "Услуга не найдена",
-                SaleDate = s.SaleDate.ToString("dd.MM.yyyy"),
-                StartDate = s.StartDate.ToString("dd.MM.yyyy"),
-                EndDate = s.EndDate.ToString("dd.MM.yyyy"),
-                VisitCount = s.Visits.Count(),
-                MaxVisits = s.MaxVisits
-            }).ToListAsync();
-
-            return Json(result);
+                ServiceName = sale.Service != null ? sale.Service.Name : "Услуга не найдена",
+                SaleDate = sale.SaleDate.ToString("dd.MM.yyyy"),
+                StartDate = sale.StartDate.ToString("dd.MM.yyyy"),
+                EndDate = sale.EndDate.ToString("dd.MM.yyyy"),
+                VisitCount = sale.Visits.Count(),
+                MaxVisits = sale.MaxVisits
+            }).ToList();
+    
+            return Json(new
+            {
+                Sales = result,
+                Pagination = new
+                {
+                    CurrentPage = pagedSales.CurrentPage,
+                    TotalPages = pagedSales.TotalPages,
+                    HasPreviousPage = pagedSales.HasPreviousPage,
+                    HasNextPage = pagedSales.HasNextPage,
+                    PageSize = pageSize
+                }
+            });
         }
         catch (Exception ex)
         {

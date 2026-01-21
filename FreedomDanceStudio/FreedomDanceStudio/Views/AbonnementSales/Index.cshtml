@@ -84,7 +84,9 @@
                 <td>
                     @if (item.Client != null)
                     {
-                        @item.Client.FirstName @item.Client.LastName
+                        <div>
+                            @(item.Client.FirstName?.Trim() ?? "") @(item.Client.LastName?.Trim() ?? "")
+                        </div>
                     }
                     else
                     {
@@ -194,6 +196,10 @@
     <!-- Сообщение об отсутствии результатов -->
     <div id="noResultsMessage" class="alert alert-info text-center" style="display:none;">
         Продажи абонементов не найдены по вашему запросу.
+    </div>
+    
+    <div class="pagination-container mt-3">
+        <!-- Здесь будет динамическая пагинация при AJAX‑поиске -->
     </div>
 </div>
 
