@@ -67,3 +67,19 @@ document.querySelectorAll('.mark-visit-btn').forEach(btn => {
         }
     });
 });
+
+async function refreshVisitCount(abonnementSaleId) {
+    try {
+        const response = await fetch(`/AbonnementSales/GetVisitCount?id=${abonnementSaleId}`);
+        if (response.ok) {
+            const count = await response.json();
+            // Обновляем счётчик в основной таблице
+            const row = document.querySelector(`tr[data-sale-id="${abonnementSaleId}"]`);
+            if (row) {
+                row.querySelector('.badge.bg-primary').textContent = count;
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка обновления счётчика:', error);
+    }
+}

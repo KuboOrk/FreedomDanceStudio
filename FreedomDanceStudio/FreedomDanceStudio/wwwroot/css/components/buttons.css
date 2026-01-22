@@ -77,3 +77,13 @@
     border-color: #146c43;
     color: #fff;
 }
+
+.visit-date-input {
+    width: 180px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-edit-date {
+    padding: 0.25rem 0.75rem;
+}

@@ -113,9 +113,12 @@
                     <span class="badge bg-primary">@(item.Visits?.Count ?? 0)</span>
 
                     <!-- Кнопка просмотра истории -->
+                    <!-- Кнопка просмотра истории -->
                     <button type="button"
                             class="btn btn-sm btn-outline-info view-history-btn"
                             data-abonnement-id="@item.Id"
+                            data-bs-toggle="modal"
+                            data-bs-target="#visitHistoryModal"
                             title="Посмотреть историю посещений">
                         <i class="bi bi-clock-history"></i> История
                     </button>

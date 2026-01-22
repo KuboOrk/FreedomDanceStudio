@@ -558,4 +558,15 @@ public async Task<IActionResult> Edit
     }
 
     #endregion
+    
+    // GET: /AbonnementSales/GetVisitCount?id=5
+    [HttpGet]
+    [Produces("application/json")]
+    public async Task<IActionResult> GetVisitCount(int id)
+    {
+        var count = await _context.ClientVisits
+            .Where(v => v.AbonnementSaleId == id)
+            .CountAsync();
+        return Json(count);
+    }
 }
