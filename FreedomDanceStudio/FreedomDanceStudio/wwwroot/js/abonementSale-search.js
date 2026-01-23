@@ -1,5 +1,5 @@
 /**
- * Реализует AJAX‑поиск продаж абонементов без разрушения форм и обработчиков
+ * Реализует AJAX‑поиск продаж абонементов с корректной работой модальных окон и кнопок
  */
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
@@ -18,9 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadingIndicator.className = 'text-center text-muted my-3';
     loadingIndicator.textContent = 'Поиск...';
     loadingIndicator.style.display = 'none';
-    // ИСПРАВЛЕНО: используем корректный метод вставки
     tableBody.parentElement.insertAdjacentElement('beforeBegin', loadingIndicator);
-
 
     /**
      * Выполняет AJAX‑запрос для поиска продаж абонементов
@@ -44,14 +42,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const data = await response.json();
 
-            // ИСПРАВЛЕНО: ключи в camelCase согласно ответу сервера
             if (!data || !Array.isArray(data.sales) || !data.pagination) {
                 console.error('Некорректный формат ответа от сервера:', data);
                 showError('Сервер вернул некорректные данные. Попробуйте позже.');
                 return;
             }
 
-            updateTableVisibility(data.sales, data.pagination); // camelCase
+            updateTableVisibility(data.sales, data.pagination);
+            refreshVisitButtons(); // Обновляем состояние кнопок после поиска
         } catch (error) {
             console.error('Ошибка поиска:', error);
             showError(`Не удалось выполнить поиск: ${error.message}`);
@@ -62,19 +60,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     /**
-     * Обновляет видимость строк и текст в текстовых ячейках (не трогает формы и кнопки)
+     * Обновляет видимость строк и перепривязывает обработчики
      */
     function updateTableVisibility(sales, pagination) {
-        // ИСПРАВЛЕНО: защита от undefined/null
         if (!sales || !Array.isArray(sales)) {
             console.warn('Данные продаж отсутствуют или некорректны');
             tableBody.innerHTML = '';
             noResultsMessage.style.display = 'block';
-            updatePagination(null);
+            updatePagination(pagination);
             return;
         }
 
-        // Очищаем таблицу
         tableBody.innerHTML = '';
 
         if (sales.length === 0) {
@@ -91,6 +87,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         updatePagination(pagination);
+
+        // Перепривязываем обработчики после обновления таблицы
+        rebindEventHandlers();
     }
 
     function updatePagination(pagination) {
@@ -102,15 +101,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let html = '<ul class="pagination">';
 
-        if (pagination && pagination.hasPreviousPage) { // camelCase
+        if (pagination && pagination.hasPreviousPage) {
             html += `<li class="page-item"><a href="#" class="page-link" data-page="${pagination.currentPage - 1}">Назад</a></li>`;
         } else {
             html += '<li class="page-item disabled"><span class="page-link">Назад</span></li>';
         }
 
         if (pagination) {
-            for (let i = 1; i <= pagination.totalPages; i++) { // camelCase
-                if (i === pagination.currentPage) { // camelCase
+            for (let i = 1; i <= pagination.totalPages; i++) {
+                if (i === pagination.currentPage) {
                     html += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
                 } else {
                     html += `<li class="page-item"><a href="#" class="page-link" data-page="${i}">${i}</a></li>`;
@@ -118,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        if (pagination && pagination.hasNextPage) { // camelCase
+        if (pagination && pagination.hasNextPage) {
             html += `<li class="page-item"><a href="#" class="page-link" data-page="${pagination.currentPage + 1}">Вперед</a></li>`;
         } else {
             html += '<li class="page-item disabled"><span class="page-link">Вперед</span></li>';
@@ -136,11 +135,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-
     /**
      * Создаёт новую строку таблицы для найденной продажи абонемента
-     * @param {Object} sale - данные продажи из AJAX‑ответа
-     * @returns {HTMLTableRowElement} - готовая строка таблицы
      */
     function createTableRow(sale) {
         const row = document.createElement('tr');
@@ -148,7 +144,6 @@ document.addEventListener('DOMContentLoaded', function() {
         row.setAttribute('data-max-visits', sale.maxVisits);
         row.setAttribute('data-visit-count', sale.visitCount);
 
-        // Экранируем текст для защиты от XSS
         const safeClientName = escapeHtml(sale.clientName || 'Клиент не найден');
         const safeServiceName = escapeHtml(sale.serviceName || 'Услуга не найдена');
 
@@ -163,35 +158,143 @@ document.addEventListener('DOMContentLoaded', function() {
             <button type="button"
                     class="btn btn-sm btn-outline-info view-history-btn"
                     data-abonnement-id="${sale.id}"
-            title="Посмотреть историю посещений">
+                    title="Посмотреть историю посещений">
                 <i class="bi bi-clock-history"></i> История
             </button>
         </td>
-        <td class="text-end">
-            <a href="/AbonnementSales/Edit/${sale.id}"
-               class="btn btn-sm btn-outline-primary me-1">Редактировать</a>
-            <button type="button"
-                    class="btn btn-sm btn-outline-success mark-visit-btn"
-            onclick="markVisitAndRefresh(${sale.id})"
-            data-abonnement-id="${sale.id}"
-            title="Отметить посещение клиента">
-                <i class="bi bi-calendar-check"></i> Отметить
-            </button>
-            <form action="/AbonnementSales/Delete" method="post" style="display:inline;">
-                <input type="hidden" name="id" value="${sale.id}"/>
-                <button type="submit" class="btn btn-sm btn-outline-danger"
-                        onclick="return confirm('Удалить запись?')">Удалить</button>
-            </form>
-        </td>`;
-
+         <td class="text-end">
+        <a href="/AbonnementSales/Edit/${sale.id}" class="btn btn-sm btn-outline-primary me-1">Редактировать</a>
+        <button type="button"
+                class="btn btn-sm btn-outline-success mark-visit-btn"
+                data-abonnement-id="${sale.id}"
+                title="Отметить посещение клиента">
+            <i class="bi bi-calendar-check"></i> Отметить
+        </button>
+        <form action="/AbonnementSales/Delete" method="post" style="display:inline;">
+            <input type="hidden" name="id" value="${sale.id}"/>
+            <!-- Добавляем токен вручную -->
+            <input type="hidden" name="__RequestVerificationToken" 
+                   value="${document.querySelector('input[name="__RequestVerificationToken"]').value}">
+            <button type="submit" class="btn btn-sm btn-outline-danger"
+                    onclick="return confirm('Удалить запись?')">Удалить</button>
+        </form>
+    </td>`;
 
         return row;
     }
 
     /**
+     * Перепривязывает обработчики событий к динамическим элементам
+     */
+    function rebindEventHandlers() {
+        // Обработчики для кнопки «История посещений»
+        document.querySelectorAll('.view-history-btn').forEach(btn => {
+            btn.removeEventListener('click', handleViewHistory); // Удаляем старые (если есть)
+            btn.addEventListener('click', handleViewHistory);
+        });
+
+        // Обработчики для кнопки «Отметить посещение»
+        document.querySelectorAll('.mark-visit-btn').forEach(btn => {
+            btn.removeEventListener('click', handleMarkVisit); // Удаляем старые
+            btn.addEventListener('click', handleMarkVisit);
+        });
+    }
+
+    /**
+     * Обработчик клика по кнопке «История посещений»
+     */
+    async function handleViewHistory() {
+        const abonnementId = this.getAttribute('data-abonnement-id');
+
+        try {
+            const response = await fetch(`/ClientVisits/GetVisitHistory?abonnementSaleId=${abonnementId}`);
+
+            if (response.ok) {
+                const history = await response.json();
+                showVisitHistoryModal(history, abonnementId);
+            } else {
+                showToast('Ошибка загрузки', 'HTTP ' + response.status, 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка при загрузке истории посещений (ID: ' + abonnementId + '):', error);
+            showToast('Ошибка', 'Не удалось загрузить историю посещений.', 'danger');
+        }
+    }
+
+    /**
+     * Обработчик клика по кнопке «Отметить посещение»
+     */
+    async function handleMarkVisit() {
+        const abonnementId = this.getAttribute('data-abonnement-id');
+        const row = this.closest('tr');
+        const visitCountEl = row.querySelector('.badge');
+        const maxVisits = parseInt(row.getAttribute('data-max-visits')) || 0;
+
+        try {
+            const response = await fetch('/ClientVisits/MarkVisit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: `abonnementSaleId=${abonnementId}`
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    // Обновляем счётчик
+                    visitCountEl.textContent = result.visitCount;
+                    row.setAttribute('data-visit-count', result.visitCount);
+                    refreshVisitButtons(); // Перепроверяем состояние кнопок
+                    // ПОКАЗЫВАЕМ TOAST: успешная отметка
+                    showToast('Успех', result.message, 'success');
+                } else {
+                    // Лимит исчерпан
+                    visitCountEl.textContent = result.visitCount;
+                    row.setAttribute('data-visit-count', result.visitCount);
+                    refreshVisitButtons();
+                    // ПОКАЗЫВАЕМ TOAST: лимит исчерпан
+                    showToast('Внимание', result.message, 'warning');
+                }
+            } else {
+                // ПОКАЗЫВАЕМ TOAST: ошибка сервера
+                showToast('Ошибка', `HTTP ${response.status}`, 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка при отметке посещения (ID: ' + abonnementId + '):', error);
+            // ПОКАЗЫВАЕМ TOAST: сетевая ошибка
+            showToast('Ошибка', 'Не удалось отметить посещение. Проверьте консоль (F12).', 'danger');
+        }
+    }
+
+    /**
+     * Обновляет состояние кнопок «Отметить посещение» на основе данных строки
+     */
+    function refreshVisitButtons() {
+        document.querySelectorAll('.mark-visit-btn').forEach(btn => {
+            const row = btn.closest('tr');
+            const visitCount = parseInt(row.getAttribute('data-visit-count')) || 0;
+            const maxVisits = parseInt(row.getAttribute('data-max-visits')) || 0;
+
+            if (maxVisits > 0 && visitCount >= maxVisits) {
+                btn.disabled = true;
+                btn.textContent = 'Исчерпано';
+                btn.classList.remove('btn-outline-success', 'btn-success');
+                btn.classList.add('btn-danger');
+                btn.title = 'Лимит посещений исчерпан';
+            } else {
+                btn.disabled = false;
+                btn.textContent = 'Отметить';
+                btn.classList.remove('btn-danger', 'btn-success');
+                btn.classList.add('btn-outline-success');
+                btn.title = 'Отметить посещение клиента';
+            }
+        });
+    }
+
+    /**
      * Экранирует специальные символы HTML для безопасного вывода
-     * @param {string} text - исходный текст
-     * @returns {string} - экранированный текст
      */
     function escapeHtml(text) {
         if (typeof text !== 'string') return '';
@@ -207,7 +310,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /**
      * Показывает сообщение об ошибке
-     * @param {string} message - текст ошибки для отображения
      */
     function showError(message) {
         const errorDiv = document.createElement('div');
@@ -227,11 +329,210 @@ document.addEventListener('DOMContentLoaded', function() {
         const searchTerm = e.target.value.trim();
         clearTimeout(searchTimeout);
 
+
         if (searchTerm === '') {
-            // Возвращаемся к стандартному представлению Index
             window.location.href = '/AbonnementSales';
         } else {
             searchTimeout = setTimeout(() => performSearch(searchTerm), 300);
         }
     });
+
+    // Инициализация при загрузке
+    refreshVisitButtons();
 });
+
+/**
+ * Отображает модальное окно с историей посещений (переиспользовано из history-modal.js)
+ */
+function showVisitHistoryModal(history, abonnementId) {
+    const modalHtml = `
+    <div class="modal fade" id="visitHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">История посещений (абонемент №${abonnementId})</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    ${history.length > 0
+        ? `<table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Дата посещения</th>
+                                    <th>Последнее изменение</th>
+                                    <th class="text-end">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${history.map(visit => `
+                                <tr data-visit-id="${visit.id}">
+                                    <td>
+                                        <span class="visit-date-display">${new Date(visit.visitDate).toLocaleDateString('ru-RU')}</span>
+                                        <input type="date"
+                               class="form-control visit-date-input"
+                               value="${visit.visitDate}"
+                               style="display:none;">
+                                    </td>
+                                    <td>${visit.modifiedAt
+            ? new Date(visit.modifiedAt).toLocaleDateString('ru-RU')
+            : 'Не изменялось'}</td>
+                                    <td class="text-end">
+                                        <button type="button"
+                                class="btn btn-sm btn-outline-primary edit-date-btn"
+                                data-visit-id="${visit.id}">
+                            <i class="bi bi-pencil"></i> Редактировать
+                        </button>
+                        <button type="button"
+                                class="btn btn-sm btn-success save-date-btn"
+                                style="display:none;"
+                                data-visit-id="${visit.id}">
+                            <i class="bi bi-check"></i> Сохранить
+                        </button>
+                        <button type="button"
+                                class="btn btn-sm btn-secondary cancel-edit-btn"
+                                style="display:none;">
+                            <i class="bi bi-x"></i> Отмена
+                        </button>
+                                    </td>
+                                </tr>`).join('')}
+                            </tbody>
+                        </table>`
+        : '<p class="text-muted">Посещения не найдены</p>'
+    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('visitHistoryModal'));
+    modal.show();
+
+    // Обработчики событий для кнопок внутри модального окна
+    document.querySelectorAll('.edit-date-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const visitId = this.getAttribute('data-visit-id');
+            const row = this.closest('tr');
+            row.querySelector('.visit-date-display').style.display = 'none';
+            row.querySelector('.visit-date-input').style.display = 'block';
+            this.style.display = 'none';
+            row.querySelector('.save-date-btn').style.display = 'inline-block';
+            row.querySelector('.cancel-edit-btn').style.display = 'inline-block';
+        });
+    });
+
+    document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const row = this.closest('tr');
+            row.querySelector('.visit-date-display').style.display = 'block';
+            row.querySelector('.visit-date-input').style.display = 'none';
+            row.querySelector('.edit-date-btn').style.display = 'inline-block';
+            this.style.display = 'none';
+            row.querySelector('.save-date-btn').style.display = 'none';
+        });
+    });
+
+    document.querySelectorAll('.save-date-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const visitId = this.getAttribute('data-visit-id');
+            const row = this.closest('tr');
+            const dateInput = row.querySelector('.visit-date-input');
+            const newDateStr = dateInput.value; // Формат: "yyyy-MM-dd"
+
+            if (!newDateStr) {
+                showToast('Ошибка', 'Выберите дату', 'danger');
+                return;
+            }
+
+            // Преобразуем в UTC дату без времени
+            const newDate = new Date(newDateStr + 'T00:00:00Z');
+
+            try {
+                const response = await fetch(`/ClientVisits/EditVisitDate?id=${visitId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: JSON.stringify(newDate)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+
+                    // Обновляем отображение (только дата)
+                    row.querySelector('.visit-date-display').textContent =
+                        new Date(result.newDate).toLocaleDateString('ru-RU');
+                    if (result.modifiedAt) {
+                        row.cells[1].textContent =
+                            new Date(result.modifiedAt).toLocaleDateString('ru-RU');
+                    }
+
+                    // Возвращаем в режим просмотра
+                    dateInput.style.display = 'none';
+                    row.querySelector('.visit-date-display').style.display = 'block';
+                    this.style.display = 'none';
+                    row.querySelector('.cancel-edit-btn').style.display = 'none';
+                    row.querySelector('.edit-date-btn').style.display = 'inline-block';
+
+                    showToast('Успех', 'Дата посещения обновлена', 'success');
+                } else {
+                    const error = await response.json();
+                    showToast('Ошибка', error.message || 'Не удалось обновить дату', 'danger');
+                }
+            } catch (error) {
+                console.error('Ошибка при сохранении даты:', error);
+                showToast('Ошибка', 'Не удалось сохранить изменения', 'danger');
+            }
+        });
+    });
+
+    // Удаляем модальное окно из DOM после закрытия
+    document.getElementById('visitHistoryModal').addEventListener('hidden.bs.modal', function () {
+        this.remove();
+    });
+}
+
+/**
+ * Показывает уведомление (toast)
+ * @param {string} title - Заголовок уведомления
+ * @param {string} message - Текст сообщения
+ * @param {string} type - Тип (success, danger, warning, info)
+ */
+function showToast(title, message, type = 'info') {
+    const container = document.getElementById('liveToastContainer');
+
+    if (!container) {
+        console.error('Контейнер #liveToastContainer не найден в DOM!');
+        return;
+    }
+
+    const toastId = 'toast-' + Date.now() + Math.random().toString(36).substr(2, 9);
+    const typeClasses = {
+        'success': 'bg-success text-white',
+        'danger': 'bg-danger text-white',
+        'warning': 'bg-warning text-dark',
+        'info': 'bg-info text-white'
+    };
+    const currentTypeClass = typeClasses[type] || typeClasses['info'];
+
+
+    const toastHtml = `
+        <div id="${toastId}" class="toast align-items-center ${currentTypeClass}" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">${title}: ${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>`;
+
+    container.insertAdjacentHTML('afterbegin', toastHtml);
+
+    const toastEl = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
+    toast.show();
+
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
