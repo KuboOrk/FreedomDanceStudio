@@ -15,6 +15,7 @@ public class Client
     /// </summary>
     [Required(ErrorMessage = "Имя обязательно для заполнения")]
     [StringLength(50, ErrorMessage = "Имя не может превышать 50 символов")]
+    [Display(Name = "Имя")]
     public string FirstName { get; set; } = null!;
 
     /// <summary>

@@ -58,7 +58,7 @@
                    aria-label="Поиск продаж абонементов"
                    value="@ViewContext.HttpContext.Request.Query["search"]">
         </div>
-        <small class="text-muted mt-2">Поиск выполняется автоматически при вводе</small>
+        <small class="text-dark mt-2">Поиск выполняется автоматически при вводе</small>
     </div>
 
     <!-- Таблица с продажами -->
@@ -112,7 +112,6 @@
                     <!-- Счётчик посещений -->
                     <span class="badge bg-primary">@(item.Visits?.Count ?? 0)</span>
 
-                    <!-- Кнопка просмотра истории -->
                     <!-- Кнопка просмотра истории -->
                     <button type="button"
                             class="btn btn-sm btn-outline-info view-history-btn"
