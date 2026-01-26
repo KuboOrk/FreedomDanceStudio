@@ -26,6 +26,7 @@ jobs:
       - name: lowercasing actor name
         run: |
           IMAGE_NAME=ghcr.io/${{ github.actor }}/freedomdancestudio:latest
+          echo "IMAGE_NAME=${IMAGE_NAME@L}" >> $GITHUB_ENV
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -33,4 +34,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${IMAGE_NAME@L}
+          tags: ${IMAGE_NAME}
