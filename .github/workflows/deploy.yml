@@ -25,7 +25,7 @@ jobs:
 
       - name: Build docker image
         run: |
-          ls -l ${{github.workspace}}
+          ls -l ${{github.workspace}}/..
           docker buildx build --file ${{github.workspace}}/Dockerfile --tag registry.gitlab.com/kuboork-server/docker/freedomdancestudio:latest .
           docker push registry.gitlab.com/kuboork-server/docker/freedomdancestudio:latest 
 
