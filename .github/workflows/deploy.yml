@@ -33,3 +33,12 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: registry.gitlab.com/kuboork-server/docker/freedomdancestudio:latest
+
+      - name: Connect and run deploy script
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          port: ${{ secrets.SERVER_PORT }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: bash ~/docker/freedom/_deploy/deploy.sh
