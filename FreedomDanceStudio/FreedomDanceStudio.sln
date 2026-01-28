@@ -2,6 +2,20 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreedomDanceStudio", "FreedomDanceStudio\FreedomDanceStudio.csproj", "{B4DD01F5-D0EB-494D-90C2-5DF8C4FFB942}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_ci-cd", "_ci-cd", "{2DB92B19-92A3-4AF2-B7A9-6C0A1FD69FC4}"
+	ProjectSection(SolutionItems) = preProject
+		..\.dockerignore = ..\.dockerignore
+		..\.gitattributes = ..\.gitattributes
+		..\.gitignore = ..\.gitignore
+		..\Dockerfile = ..\Dockerfile
+		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github-workflows", "github-workflows", "{17F18630-92D3-48D3-AEF0-F89EEA7556F1}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\deploy.yml = ..\.github\workflows\deploy.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +26,8 @@ Global
 		{B4DD01F5-D0EB-494D-90C2-5DF8C4FFB942}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4DD01F5-D0EB-494D-90C2-5DF8C4FFB942}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4DD01F5-D0EB-494D-90C2-5DF8C4FFB942}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{17F18630-92D3-48D3-AEF0-F89EEA7556F1} = {2DB92B19-92A3-4AF2-B7A9-6C0A1FD69FC4}
 	EndGlobalSection
 EndGlobal
