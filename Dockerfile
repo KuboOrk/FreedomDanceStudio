@@ -10,7 +10,7 @@ WORKDIR /src
 COPY ["FreedomDanceStudio/FreedomDanceStudio/FreedomDanceStudio.csproj", "FreedomDanceStudio/FreedomDanceStudio/"]
 RUN dotnet restore "FreedomDanceStudio/FreedomDanceStudio/FreedomDanceStudio.csproj"
 COPY . .
-WORKDIR "/FreedomDanceStudio/FreedomDanceStudio"
+WORKDIR "/src/FreedomDanceStudio/FreedomDanceStudio"
 RUN dotnet build "./FreedomDanceStudio.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
