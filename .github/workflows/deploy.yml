@@ -27,6 +27,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile
+          file: Dockerfile
           push: true
           tags: registry.gitlab.com/kuboork-server/docker/freedomdancestudio:latest

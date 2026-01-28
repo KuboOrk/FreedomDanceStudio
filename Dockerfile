@@ -7,10 +7,10 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["FreedomDanceStudio/FreedomDanceStudio.csproj", "FreedomDanceStudio/"]
-RUN dotnet restore "FreedomDanceStudio/FreedomDanceStudio.csproj"
+COPY ["FreedomDanceStudio/FreedomDanceStudio/FreedomDanceStudio.csproj", "FreedomDanceStudio/FreedomDanceStudio/"]
+RUN dotnet restore "FreedomDanceStudio/FreedomDanceStudio/FreedomDanceStudio.csproj"
 COPY . .
-WORKDIR "/src/FreedomDanceStudio"
+WORKDIR "/FreedomDanceStudio/FreedomDanceStudio"
 RUN dotnet build "./FreedomDanceStudio.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
