@@ -114,12 +114,71 @@ public async Task<IActionResult> MarkVisit(int abonnementSaleId)
             .OrderByDescending(v => v.VisitDate)
             .Select(v => new
             {
-                VisitDate = v.VisitDate.ToString("yyyy-MM-ddTHH:mm:ss") // ISO-формат
+                Id = v.Id,
+                VisitDate = v.VisitDate.ToString("yyyy-MM-dd"),
+                ModifiedAt = v.ModifiedAt.HasValue
+                    ? v.ModifiedAt.Value.ToString("yyyy-MM-dd")
+                    : null
             })
             .ToListAsync();
 
         return Json(visits);
     }
 
+    #endregion
+
+    #region Обработка сохранение отредактированное даты
+    // PUT: /ClientVisits/EditVisitDate
+    // PUT: /ClientVisits/EditVisitDate
+    [HttpPut]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditVisitDate(int id, [FromBody] DateTime newDate)
+    {
+        try
+        {
+            var visit = await _context.ClientVisits.FindAsync(id);
+            if (visit == null)
+                return NotFound(new { success = false, message = "Посещение не найдено" });
+
+            // Нормализуем дату: устанавливаем время на 00:00:00 UTC
+            var normalizedDate = DateTime.SpecifyKind(
+                (new DateTime(newDate.Year, newDate.Month, newDate.Day)),
+                DateTimeKind.Utc);
+
+            // Проверка: новая дата не должна быть в будущем
+            var todayUtc = DateTime.UtcNow.Date;
+            if (normalizedDate > todayUtc)
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Нельзя установить дату в будущем"
+                });
+
+            visit.VisitDate = normalizedDate;
+            visit.ModifiedAt = DateTime.UtcNow;
+
+            _context.Entry(visit).Property(v => v.VisitDate).IsModified = true;
+            _context.Entry(visit).Property(v => v.ModifiedAt).IsModified = true;
+
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                message = "Дата посещения обновлена",
+                newDate = visit.VisitDate.ToString("yyyy-MM-dd"),
+                modifiedAt = visit.ModifiedAt?.ToString("yyyy-MM-dd")
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при редактировании даты посещения ID: {VisitId}", id);
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Ошибка сервера"
+            });
+        }
+    }
     #endregion
 }

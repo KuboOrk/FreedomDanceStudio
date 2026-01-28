@@ -139,13 +139,36 @@ public class EmployeesController: Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeletePost(int? id)
     {
+        if (id == null || id == 0)
+            return NotFound();
+
         var employee = await _context.Employees.FindAsync(id);
         if (employee == null)
             return NotFound();
 
-        _context.Employees.Remove(employee);
-        await _context.SaveChangesAsync();
-        return RedirectToAction(nameof(Index));
+        // Проверяем наличие связанных расчётов зарплаты
+        var salaryCalculations = _context.EmployeeSalaryCalculations
+            .Where(calc => calc.EmployeeId == employee.Id)
+            .ToList();
+
+        // Проверяем наличие связанных записей о рабочих часах
+        var workHours = _context.EmployeeWorkHours
+            .Where(wh => wh.EmployeeId == employee.Id)
+            .ToList();
+
+        // Если есть связанные записи — выводим информационное сообщение и не удаляем
+        if (salaryCalculations.Any() || workHours.Any())
+        {
+            TempData["InfoMessage"] = "Удаление невозможно: у сотрудника есть связанные записи (расчёты зарплаты или рабочие часы).";
+            return RedirectToAction(nameof(Index));
+        }
+        else
+        {
+            // Если связанных записей нет — можно удалить сотрудника
+            _context.Employees.Remove(employee);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
     }
     
     // GET: /Employees/GetEmployeeData/1

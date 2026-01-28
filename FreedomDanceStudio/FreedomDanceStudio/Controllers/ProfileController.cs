@@ -17,13 +17,13 @@ public class ProfileController : Controller
 
     // GET: /Profile/Index — просмотр профиля
     [HttpGet]
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        var userId = GetCurrentUserId();
+        var userId = await GetCurrentUserId();
         if (userId == null)
             return RedirectToAction("Login", "Account");
 
-        var user = _context.Users.Find(userId);
+        var user = await _context.Users.FindAsync(userId.Value);
         if (user == null)
             return RedirectToAction("Login", "Account");
 
@@ -33,11 +33,11 @@ public class ProfileController : Controller
     [HttpGet]
     public async Task<IActionResult> Edit()
     {
-        var userId = GetCurrentUserId();
+        var userId = await GetCurrentUserId();
         if (userId == null)
             return RedirectToAction("Login", "Account");
 
-        var user = await _context.Users.FindAsync(userId);
+        var user = await _context.Users.FindAsync(userId.Value);
         if (user == null)
             return RedirectToAction("Login", "Account");
 
@@ -50,21 +50,20 @@ public class ProfileController : Controller
     {
         if (!ModelState.IsValid)
             return View(model);
-
-        var userId = GetCurrentUserId();
+    
+        var userId = await GetCurrentUserId();
         if (userId == null)
             return RedirectToAction("Login", "Account");
-
-        var user = await _context.Users.FindAsync(userId);
+    
+        var user = await _context.Users.FindAsync(userId.Value);
         if (user == null)
             return RedirectToAction("Login", "Account");
-
-        // Обновляем только изменяемые поля
+    
         user.FirstName = model.FirstName;
         user.LastName = model.LastName;
         user.Email = model.Email;
         user.Phone = model.Phone;
-
+    
         try
         {
             await _context.SaveChangesAsync();
@@ -81,10 +80,14 @@ public class ProfileController : Controller
     /// <summary>
     /// Получает ID текущего пользователя из куки
     /// </summary>
-    private int? GetCurrentUserId()
+    private async Task<int?> GetCurrentUserId()
     {
-        var userIdCookie = HttpContext.Request.Cookies["UserId"];
-        if (string.IsNullOrEmpty(userIdCookie) || !int.TryParse(userIdCookie, out int userId))
+        // Получаем UserId из Claims
+        var userIdClaim = User.FindFirst("UserId");
+        if (userIdClaim == null)
+            return null;
+
+        if (!int.TryParse(userIdClaim.Value, out int userId))
             return null;
 
         return userId;

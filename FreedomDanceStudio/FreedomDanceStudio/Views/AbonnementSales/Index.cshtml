@@ -58,7 +58,7 @@
                    aria-label="Поиск продаж абонементов"
                    value="@ViewContext.HttpContext.Request.Query["search"]">
         </div>
-        <small class="text-muted mt-2">Поиск выполняется автоматически при вводе</small>
+        <small class="text-dark mt-2">Поиск выполняется автоматически при вводе</small>
     </div>
 
     <!-- Таблица с продажами -->
@@ -84,7 +84,9 @@
                 <td>
                     @if (item.Client != null)
                     {
-                        @item.Client.FirstName @item.Client.LastName
+                        <div>
+                            @(item.Client.FirstName?.Trim() ?? "") @(item.Client.LastName?.Trim() ?? "")
+                        </div>
                     }
                     else
                     {
@@ -114,6 +116,8 @@
                     <button type="button"
                             class="btn btn-sm btn-outline-info view-history-btn"
                             data-abonnement-id="@item.Id"
+                            data-bs-toggle="modal"
+                            data-bs-target="#visitHistoryModal"
                             title="Посмотреть историю посещений">
                         <i class="bi bi-clock-history"></i> История
                     </button>
@@ -194,6 +198,10 @@
     <!-- Сообщение об отсутствии результатов -->
     <div id="noResultsMessage" class="alert alert-info text-center" style="display:none;">
         Продажи абонементов не найдены по вашему запросу.
+    </div>
+    
+    <div class="pagination-container mt-3">
+        <!-- Здесь будет динамическая пагинация при AJAX‑поиске -->
     </div>
 </div>
 

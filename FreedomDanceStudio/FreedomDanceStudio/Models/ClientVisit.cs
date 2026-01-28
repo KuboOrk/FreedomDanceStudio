@@ -17,5 +17,11 @@ public class ClientVisit
     [DisplayFormat(DataFormatString = "{0:dd.MM.yyyy HH:mm}")]
     public DateTime VisitDate { get; set; } = DateTime.UtcNow;
 
-    [Display(Name = "Создано")] [DataType(DataType.DateTime)] public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    [Display(Name = "Создано")] 
+    [DataType(DataType.DateTime)] 
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    
+    [Display(Name = "Дата последнего изменения")]
+    [DataType(DataType.DateTime)]
+    public DateTime? ModifiedAt { get; set; }
 }

@@ -37,10 +37,16 @@ function updateAllAbonnementAlertsDisplay(alerts) {
     }
 
     alerts.forEach(alert => {
+        // ПРОПУСКАЕМ КАРТОЧКУ, ЕСЛИ ПОСЕЩЕНИЯ ИСЧЕРПАНЫ
+        if (alert.usedVisits >= alert.maxVisits) {
+            console.log(`Пропускаем абонемент ID ${alert.abonnementSaleId}: лимит посещений исчерпан`);
+            return; // ← выход из итерации
+        }
+
         // Валидация данных
         if (!alert.client || !alert.usagePercent) {
             console.warn('Invalid alert data:', alert);
-            return; // Пропускаем некорректные записи
+            return;
         }
 
         const card = document.createElement('div');
