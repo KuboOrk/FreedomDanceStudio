@@ -18,7 +18,6 @@ ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "./FreedomDanceStudio.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
-ENV ASPNETCORE_ENVIRONMENT=Staging
 WORKDIR /app
 COPY --from=publish /app/publish .
 HEALTHCHECK --interval=10m --timeout=10s --start-period=10s \

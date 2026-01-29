@@ -16,6 +16,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github-workflows", "github-
 		..\.github\workflows\deploy.yml = ..\.github\workflows\deploy.yml
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy", "deploy", "{560407A1-6CFA-4772-9406-586D1F844124}"
+	ProjectSection(SolutionItems) = preProject
+		..\.deploy\deploy.sh = ..\.deploy\deploy.sh
+		..\.deploy\docker-compose.yml = ..\.deploy\docker-compose.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,5 +35,6 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{17F18630-92D3-48D3-AEF0-F89EEA7556F1} = {2DB92B19-92A3-4AF2-B7A9-6C0A1FD69FC4}
+		{560407A1-6CFA-4772-9406-586D1F844124} = {2DB92B19-92A3-4AF2-B7A9-6C0A1FD69FC4}
 	EndGlobalSection
 EndGlobal
