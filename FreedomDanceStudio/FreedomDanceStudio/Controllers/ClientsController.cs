@@ -28,11 +28,12 @@ public class ClientsController: Controller
         // Поиск
         if (!string.IsNullOrEmpty(search))
         {
+            search = search.ToLower();
             clients = clients.Where(c =>
-                c.FirstName.Contains(search) ||
-                c.LastName.Contains(search) ||
-                c.Phone.Contains(search) ||
-                (c.Email != null && c.Email.Contains(search)));
+                (c.FirstName != null && c.FirstName.ToLower().Contains(search)) ||
+                (c.LastName != null && c.LastName.ToLower().Contains(search)) ||
+                (c.Phone != null && c.Phone.ToLower().Contains(search)) ||
+                (c.Email != null && c.Email.ToLower().Contains(search)));
         }
 
         // Пагинация
@@ -41,35 +42,58 @@ public class ClientsController: Controller
         return View(pagedClients);
     }
 
-    
     // AJAX: /Clients/Search
     [HttpGet]
     [ActionName("Search")]
     [Produces("application/json")]
-    public async Task<IActionResult> Search(string search = "")
+    public async Task<IActionResult> Search(string search = "", int page = 1)
     {
-        var clients = _context.Clients.AsQueryable();
-
-        if (!string.IsNullOrEmpty(search))
+        try
         {
-            search = search.ToLower();
-            clients = clients.Where(c =>
-                c.FirstName.ToLower().Contains(search) ||
-                c.LastName.ToLower().Contains(search) ||
-                c.Phone.ToLower().Contains(search) ||
-                (c.Email != null && c.Email.ToLower().Contains(search)));
+            const int pageSize = 10;
+
+            IQueryable<Client> query = _context.Clients;
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                search = search.ToLower();
+                query = query.Where(c =>
+                    (c.FirstName != null && c.FirstName.ToLower().Contains(search)) ||
+                    (c.LastName != null && c.LastName.ToLower().Contains(search)) ||
+                    (c.Phone != null && c.Phone.ToLower().Contains(search)) ||
+                    (c.Email != null && c.Email.ToLower().Contains(search)));
+            }
+
+            // Создаём пагинированный список
+            var pagedClients = await PagedList<Client>.CreateAsync(query, page, pageSize);
+
+            // Явно указываем типы в Select
+            var result = pagedClients.Select(client => new
+            {
+                Id = client.Id,
+                FirstName = client.FirstName ?? "",
+                LastName = client.LastName ?? "",
+                Phone = client.Phone ?? "",
+                Email = client.Email ?? "-"
+            }).ToList();
+
+            return Json(new
+            {
+                Clients = result,
+                Pagination = new
+                {
+                    CurrentPage = pagedClients.CurrentPage,
+                    TotalPages = pagedClients.TotalPages,
+                    HasPreviousPage = pagedClients.HasPreviousPage,
+                    HasNextPage = pagedClients.HasNextPage,
+                    PageSize = pageSize
+                }
+            });
         }
-
-        var result = await clients.Select(c => new
+        catch (Exception ex)
         {
-            Id = c.Id,
-            FirstName = c.FirstName,
-            LastName = c.LastName,
-            Phone = c.Phone,
-            Email = c.Email ?? "-"
-        }).ToListAsync();
-
-        return Json(result);
+            return StatusCode(500, new { error = "Внутренняя ошибка сервера", details = ex.Message });
+        }
     }
 
     // GET: /Clients/Create
