@@ -1,20 +1,28 @@
 document.addEventListener('DOMContentLoaded', function() {
     refreshAllAbonnementAlerts(); // Первоначальная загрузка (для обновлений)
-    setInterval(refreshAllAbonnementAlerts, 30000); // Автообновление каждые 30 сек
+    setInterval(refreshAllAbonnementAlerts, 30000); // Автообновление каждые 30 сек
 });
 
+// Обновление всех але́ртов (существующий код с улучшениями)
 async function refreshAllAbonnementAlerts() {
     try {
+        const container = document.getElementById('allAbonnementAlertsContainer');
+
+        // Если контейнер уже заполнен серверными данными и не пустой, не обновляем сразу
+        if (container.innerHTML.trim() !== '' && !container.querySelector('.loading')) {
+            console.log('Server data present, skipping immediate refresh');
+            return;
+        }
+
+        // Добавляем индикатор загрузки
+        container.innerHTML = '<div class="col-12"><div class="alert alert-info">Загрузка...</div></div>';
+
         console.log('Fetching alerts from /Home/GetAllAbonnementAlerts...');
         const response = await fetch('/Home/GetAllAbonnementAlerts');
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const alerts = await response.json();
-        console.log('Received alerts:', alerts); // Отладка: посмотрите структуру
-
         updateAllAbonnementAlertsDisplay(alerts);
     } catch (error) {
         console.error('Error refreshing all abonnement alerts:', error);
@@ -37,6 +45,16 @@ function updateAllAbonnementAlertsDisplay(alerts) {
     }
 
     alerts.forEach(alert => {
+        // Преобразуем строку даты в объект Date (UTC)
+        const expiryDate = new Date(alert.expiryDate);
+        const now = new Date(); // Текущая локальная дата — будет автоматически конвертирована в UTC при сравнении
+
+        // Пропускаем карточку, если абонемент истёк
+        if (expiryDate < now) {
+            console.log(`Пропускаем абонемент ID ${alert.abonnementSaleId}: срок истёк (${alert.expiryDate})`);
+            return;
+        }
+
         // ПРОПУСКАЕМ КАРТОЧКУ, ЕСЛИ ПОСЕЩЕНИЯ ИСЧЕРПАНЫ
         if (alert.usedVisits >= alert.maxVisits) {
             console.log(`Пропускаем абонемент ID ${alert.abonnementSaleId}: лимит посещений исчерпан`);
@@ -51,42 +69,41 @@ function updateAllAbonnementAlertsDisplay(alerts) {
 
         const card = document.createElement('div');
         card.className = 'col-md-6 col-lg-4 mb-3';
+        card.setAttribute('data-sale-id', alert.abonnementSaleId); // Для обновления одного але́рта
         card.innerHTML = `
             <div class="card alert-card ${alert.alertLevel?.toLowerCase() || 'normal'}">
                 <div class="card-body">
                     <h5 class="card-title">${alert.client.firstName || ''} ${alert.client.lastName || ''}</h5>
                     <p class="card-text">
-                Абонемент истекает: <strong>${formatDate(alert.expiryDate)}</strong>
-            </p>
-            <!-- Круговой индикатор -->
-            <div class="circular-progress" data-percent="${alert.usagePercent}">
-                <svg viewBox="0 0 36 36" class="circular-chart">
-                    <path class="circle-bg"
-                          d="M18 2.0845
-               a 15.9155 15.9155 0 0 1 0 31.831
-               a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="circle"
-                  stroke-dasharray="${(alert.usagePercent / 100) * 2 * Math.PI * 15.9155}, 100"
-                  d="M18 2.0845
-               a 15.9155 15.9155 0 0 1 0 31.831
-               a 15.9155 15.9155 0 0 1 0 -31.831" />
-                </svg>
-                <div class="percentage">${alert.usagePercent}%</div>
-            </div>
-
-            <div class="mt-2">
-                <small class="text-muted">
-                    Использовано: <strong>${alert.usedVisits}</strong> из <strong>${alert.maxVisits}</strong> посещений
-                </small>
-            </div>
-
-            <!-- Кнопка быстрого действия -->
-            <a href="/AbonnementSales/Edit/${alert.abonnementSaleId}"
-               class="btn btn-sm btn-outline-primary mt-2 w-100">
-                Продлить абонемент
-            </a>
-        </div>
-    </div>`;
+                        Абонемент истекает: <strong>${formatDate(alert.expiryDate)}</strong>
+                    </p>
+                    <!-- Круговой индикатор -->
+                    <div class="circular-progress" data-percent="${alert.usagePercent}">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                            <path class="circle-bg"
+                                  d="M18 2.0845
+                                     a 15.9155 15.9155 0 0 1 0 31.831
+                                     a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="circle"
+                                  stroke-dasharray="${(alert.usagePercent / 100) * 2 * Math.PI * 15.9155}, 100"
+                                  d="M18 2.0845
+                                     a 15.9155 15.9155 0 0 1 0 31.831
+                                     a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div class="percentage">${alert.usagePercent}%</div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            Использовано: <strong>${alert.usedVisits}</strong> из <strong>${alert.maxVisits}</strong> посещений
+                        </small>
+                    </div>
+                    <!-- Кнопка быстрого действия -->
+                    <a href="/AbonnementSales/Edit/${alert.abonnementSaleId}"
+                       class="btn btn-sm btn-outline-primary mt-2 w-100">
+                        Продлить абонемент
+                    </a>
+                </div>
+            </div>`;
         container.appendChild(card);
     });
 
@@ -115,12 +132,17 @@ function initializeProgressCircles() {
             return;
         }
 
-        const radius = 15.9155;
-        const circumference = 2 * Math.PI * radius;
-        const dashArray = (percent / 100) * circumference;
+        const radius = 15.9155; // Радиус из viewBox SVG
+        const circumference = 2 * Math.PI * radius; // Длина окружности
+        const dashArray = (percent / 100) * circumference; // Длина видимой части
 
         circle.style.strokeDasharray = `${dashArray} ${circumference}`;
         circle.style.transition = 'stroke-dasharray 0.3s ease-in-out'; // Плавная анимация
+
+        const percentageElement = element.querySelector('.percentage');
+        if (percentageElement) {
+            percentageElement.textContent = `${Math.round(percent)}%`;
+        }
     });
 }
 
@@ -214,141 +236,3 @@ function showErrorMessage(message) {
     document.body.appendChild(alert);
     setTimeout(() => alert.remove(), 5000);
 }
-
-// Обновление всех але́ртов (существующий код с улучшениями)
-async function refreshAllAbonnementAlerts() {
-    try {
-        const container = document.getElementById('allAbonnementAlertsContainer');
-
-        // Если контейнер уже заполнен серверными данными и не пустой, не обновляем сразу
-        if (container.innerHTML.trim() !== '' && !container.querySelector('.loading')) {
-            console.log('Server data present, skipping immediate refresh');
-            return;
-        }
-
-        // Добавляем индикатор загрузки
-        container.innerHTML = '<div class="col-12"><div class="alert alert-info">Загрузка...</div></div>';
-
-        console.log('Fetching alerts from /Home/GetAllAbonnementAlerts...');
-        const response = await fetch('/Home/GetAllAbonnementAlerts');
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const alerts = await response.json();
-        updateAllAbonnementAlertsDisplay(alerts);
-    } catch (error) {
-        console.error('Error refreshing all abonnement alerts:', error);
-        showAllAbonnementErrorState();
-    }
-}
-
-// Отображение всех але́ртов в DOM
-function updateAllAbonnementAlertsDisplay(alerts) {
-    const container = document.getElementById('allAbonnementAlertsContainer');
-    container.innerHTML = '';
-
-    if (!alerts || alerts.length === 0) {
-        container.innerHTML = `
-            <div class="col-12">
-                <div class="alert alert-info text-center">
-                    Нет абонементов в системе.
-                </div>
-            </div>`;
-        return;
-    }
-
-    alerts.forEach(alert => {
-        // Валидация данных
-        if (!alert.client || !alert.usagePercent) {
-            console.warn('Invalid alert data:', alert);
-            return; // Пропускаем некорректные записи
-        }
-
-        const card = document.createElement('div');
-        card.className = 'col-md-6 col-lg-4 mb-3';
-        card.setAttribute('data-sale-id', alert.abonnementSaleId); // Для обновления одного але́рта
-        card.innerHTML = `
-            <div class="card alert-card ${alert.alertLevel?.toLowerCase() || 'normal'}">
-                <div class="card-body">
-                    <h5 class="card-title">${alert.client.firstName || ''} ${alert.client.lastName || ''}</h5>
-            <p class="card-text">
-                Абонемент истекает: <strong>${formatDate(alert.expiryDate)}</strong>
-            </p>
-            <!-- Круговой индикатор -->
-            <div class="circular-progress" data-percent="${alert.usagePercent}">
-                <svg viewBox="0 0 36 36" class="circular-chart">
-            <path class="circle-bg"
-                  d="M18 2.0845
-               a 15.9155 15.9155 0 0 1 0 31.831
-               a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <path class="circle"
-                stroke-dasharray="${(alert.usagePercent / 100) * 2 * Math.PI * 15.9155}, 100"
-                d="M18 2.0845
-               a 15.9155 15.9155 0 0 1 0 31.831
-               a 15.9155 15.9155 0 0 1 0 -31.831" />
-                </svg>
-                <div class="percentage">${alert.usagePercent}%</div>
-            </div>
-
-
-            <div class="mt-2">
-                <small class="text-muted">
-            Использовано: <strong class="visit-count">${alert.usedVisits}</strong> из <strong>${alert.maxVisits}</strong> посещений
-                </small>
-            </div>
-
-            <!-- Кнопка быстрого действия -->
-            <a href="/AbonnementSales/Edit/${alert.abonnementSaleId}"
-               class="btn btn-sm btn-outline-primary mt-2 w-100">
-                Продлить абонемент
-            </a>
-            
-        </div>
-    </div>`;
-        container.appendChild(card);
-    });
-
-    initializeProgressCircles(); // Переинициализация SVG‑индикаторов
-}
-
-// Форматирование даты
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU');
-}
-
-// Инициализация круговых индикаторов
-function initializeProgressCircles() {
-    const progressElements = document.querySelectorAll('.circular-progress');
-    progressElements.forEach(function(element) {
-        const percentStr = element.getAttribute('data-percent');
-        const percent = parseFloat(percentStr);
-
-        if (isNaN(percent)) {
-            console.error('Invalid percent value:', percentStr);
-            return;
-        }
-
-        const circle = element.querySelector('.circle');
-        if (!circle) {
-            console.error('Circle path not found in:', element);
-            return;
-        }
-
-        // Расчёт параметров SVG-круга
-        const radius = 15.9155; // Радиус из viewBox SVG
-        const circumference = 2 * Math.PI * radius; // Длина окружности
-        const dashArray = (percent / 100) * circumference; // Длина видимой части
-
-        // Применяем стили к кругу
-        circle.style.strokeDasharray = `${dashArray} ${circumference}`;
-
-        // Обновляем текст процента
-        const percentageElement = element.querySelector('.percentage');
-        if (percentageElement) {
-            percentageElement.textContent = `${Math.round(percent)}%`;
-        }
-    });
-}
-
-

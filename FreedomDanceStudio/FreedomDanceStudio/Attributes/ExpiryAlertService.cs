@@ -100,9 +100,11 @@ public interface IExpiryAlertService
             .Include(a => a.Client)
             .Include(a => a.AbonnementSale)
             .Where(a =>
-                a.AbonnementSale != null &&
-                !a.AbonnementSale.IsDeleted &&
-                (a.MaxVisits == 0 || a.UsedVisits < a.MaxVisits))
+                    a.AbonnementSale != null &&
+                    !a.AbonnementSale.IsDeleted &&
+                    (a.MaxVisits == 0 || a.UsedVisits < a.MaxVisits) &&
+                    a.ExpiryDate >= DateTime.UtcNow // Фильтруем по неистёкшим абонементам
+            )
             .OrderByDescending(a => a.UsagePercent)
             .ThenByDescending(a => a.ExpiryDate)
             .ToListAsync();
