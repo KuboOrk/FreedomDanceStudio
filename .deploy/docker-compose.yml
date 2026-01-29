@@ -1,0 +1,11 @@
+name: freedom
+
+services:
+  back:
+    image: registry.gitlab.com/kuboork-server/docker/freedomdancestudio:latest
+    environment:
+      ASPNETCORE_ENVIRONMENT": Production
+    ports:
+      - "2301:8080"
+    mem_limit: "512M"
+
