@@ -169,3 +169,31 @@
         border-radius: 15px;
     }
 }
+
+/* Стили для кнопки показа пароля */
+.show-password-btn {
+    border-radius: 0 0.375rem 0.375rem 0; /* Скругление только справа */
+    padding: 0.375rem 0.75rem;
+}
+
+/* Иконка внутри кнопки */
+.show-password-btn i {
+    font-size: 1.1rem;
+}
+
+/* При наведении — меняем иконку */
+.show-password-btn:hover i.bi-eye {
+    display: none;
+}
+.show-password-btn:hover i.bi-eye-slash {
+    display: inline-block;
+}
+
+/* Когда пароль показан — меняем иконку */
+.show-password-btn.showing i.bi-eye {
+    display: none;
+}
+.show-password-btn.showing i.bi-eye-slash {
+    display: inline-block;
+}
+

@@ -42,8 +42,15 @@
 
             <div class="form-group">
                 <label for="regPassword" class="form-label">Пароль</label>
-                <input type="password" id="regPassword" name="PasswordHash"
-                       class="form-control auth-input" placeholder="Придумайте пароль" required />
+                <div class="input-group auth-input-group">
+                    <input type="password" id="regPassword" name="PasswordHash"
+                           class="form-control auth-input"
+                           placeholder="Придумайте пароль" required />
+                    <button type="button" class="btn btn-outline-secondary show-password-btn" aria-label="Показать пароль">
+                        <i class="bi bi-eye"></i>
+                        <i class="bi bi-eye-slash" style="display: none;"></i>
+                    </button>
+                </div>
                 <div class="invalid-feedback">
                     Пароль обязателен
                 </div>
@@ -51,8 +58,15 @@
 
             <div class="form-group">
                 <label for="confirmPassword" class="form-label">Подтвердите пароль</label>
-                <input type="password" id="confirmPassword" name="confirmPassword"
-                       class="form-control auth-input" placeholder="Повторите пароль" required />
+                <div class="input-group auth-input-group">
+                    <input type="password" id="confirmPassword" name="confirmPassword"
+                           class="form-control auth-input"
+                           placeholder="Повторите пароль" required />
+                    <button type="button" class="btn btn-outline-secondary show-password-btn" aria-label="Показать подтверждённый пароль">
+                        <i class="bi bi-eye"></i>
+                        <i class="bi bi-eye-slash" style="display: none;"></i>
+                    </button>
+                </div>
                 <div class="invalid-feedback" id="confirmPasswordError">
                     Пароли должны совпадать
                 </div>

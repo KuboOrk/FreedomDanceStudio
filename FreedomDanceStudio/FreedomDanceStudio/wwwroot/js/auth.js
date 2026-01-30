@@ -141,4 +141,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Обработка кнопок показа паролей (для всех полей пароля в форме)
+    const passwordInputs = document.querySelectorAll('#regPassword, #confirmPassword,#password');
+    const showPasswordBtns = document.querySelectorAll('.show-password-btn');
+
+// Связываем каждое поле пароля с соответствующей кнопкой
+    passwordInputs.forEach((input, index) => {
+        const btn = showPasswordBtns[index];
+
+        if (input && btn) {
+            btn.addEventListener('click', function() {
+                // Переключаем тип поля
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    this.classList.add('showing'); // Меняем иконку
+                } else {
+                    input.type = 'password';
+                    this.classList.remove('showing'); // Возвращаем иконку
+                }
+
+                // Сохраняем фокус на поле после переключения
+                input.focus();
+            });
+        }
+    });
 });
