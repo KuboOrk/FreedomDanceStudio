@@ -39,9 +39,16 @@ public class AccountController : Controller
     // POST: /Account/Login
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Route("Login")] // Явное указание маршрута
+    [Route("Login")]
     public async Task<IActionResult> Login(string username, string password)
     {
+        // Проверка на пустые значения
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        {
+            ModelState.AddModelError("", "Логин и пароль обязательны");
+            return View();
+        }
+
         var user = _context.Users.FirstOrDefault(u => u.Username == username && u.IsActive);
 
         if (user != null && BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
@@ -84,24 +91,54 @@ public class AccountController : Controller
     // POST: /Account/Register
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Route("Register")] // Явное указание маршрута
+    [Route("Register")]
     public async Task<IActionResult> Register(User user, string confirmPassword)
     {
-        // Валидация совпадения паролей
+        // 1. Проверка обязательных полей
+        if (string.IsNullOrWhiteSpace(user.Username) ||
+            string.IsNullOrWhiteSpace(user.PasswordHash) ||
+            string.IsNullOrWhiteSpace(confirmPassword) ||
+            string.IsNullOrWhiteSpace(user.Email))
+        {
+            ModelState.AddModelError("", "Все поля обязательны");
+            return View(user);
+        }
+
+        // 2. Проверка совпадения паролей
         if (user.PasswordHash != confirmPassword)
         {
             ModelState.AddModelError("confirmPassword", "Пароли не совпадают");
             return View(user);
         }
 
-        // Проверка уникальности логина
+        // 3. Валидация формата email (на сервере)
+        if (!IsValidEmail(user.Email))
+        {
+            ModelState.AddModelError("Email", "Некорректный формат email");
+            return View(user);
+        }
+
+        // 4. Проверка уникальности логина
         if (_context.Users.Any(u => u.Username == user.Username))
         {
             ModelState.AddModelError("Username", "Пользователь с таким логином уже существует");
             return View(user);
         }
 
-        // Хеширование пароля
+        // 5. Проверка уникальности email
+        if (_context.Users.Any(u => u.Email == user.Email))
+        {
+            ModelState.AddModelError("Email", "Email уже зарегистрирован");
+            return View(user);
+        }
+
+        // 6. Дополнительная валидация модели
+        if (!ModelState.IsValid)
+        {
+            return View(user);
+        }
+
+        // 7. Хеширование пароля и сохранение
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
         user.CreatedAt = DateTime.UtcNow;
         user.Role = "User";
@@ -112,6 +149,23 @@ public class AccountController : Controller
 
         TempData["Success"] = "Регистрация прошла успешно! Теперь войдите в систему.";
         return RedirectToAction("Login");
+    }
+
+    // Вспомогательный метод для проверки email
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     // POST: /Account/Logout

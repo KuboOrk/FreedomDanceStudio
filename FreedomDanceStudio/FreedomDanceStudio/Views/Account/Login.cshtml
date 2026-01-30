@@ -31,11 +31,14 @@
 
         <h3 class="text-center mb-4">Вход в систему</h3>
 
-        <form method="post" asp-action="Login" class="auth-form active">
+
+        <!-- Добавлен id и novalidate -->
+        <form method="post" asp-action="Login" id="loginForm" class="auth-form active" novalidate>
             <div class="form-group">
                 <label for="username" class="form-label">Логин</label>
                 <input type="text" id="username" name="username"
                        class="form-control auth-input" placeholder="Введите логин" required />
+                <!-- Сообщение об ошибке -->
                 <div class="invalid-feedback">
                     Пожалуйста, введите логин
                 </div>
