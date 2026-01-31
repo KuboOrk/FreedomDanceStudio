@@ -63,10 +63,13 @@
                 Войти
             </button>
 
-            @if (ViewData["Error"] != null)
+            @if (!ViewContext.ModelState.IsValid)
             {
                 <div class="alert alert-danger mt-3">
-                    @ViewData["Error"]
+                    @foreach (var modelError in ViewContext.ModelState.SelectMany(x => x.Value?.Errors))
+                    {
+                        <div>@modelError.ErrorMessage</div>
+                    }
                 </div>
             }
         </form>

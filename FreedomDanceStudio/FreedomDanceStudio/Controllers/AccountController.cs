@@ -72,9 +72,11 @@ public class AccountController : Controller
             TempData["Success"] = "Вы успешно вошли в систему.";
             return RedirectToAction("Index", "Home");
         }
-
-        ModelState.AddModelError("", "Неверный логин или пароль");
-        return View();
+        else
+        {
+            ModelState.AddModelError("", "Неверный логин или пароль"); 
+            return View();
+        }
     }
 
     // GET: /Account/Register
