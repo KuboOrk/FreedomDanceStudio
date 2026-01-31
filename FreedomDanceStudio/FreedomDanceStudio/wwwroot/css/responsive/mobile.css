@@ -74,3 +74,14 @@
         gap: 0.75rem;
     }
 }
+
+/* Адаптивность авторизации/регистрации*/
+@media (max-width: 576px) {
+    .auth-container {
+        padding: 0 10px;
+    }
+
+    .auth-card {
+        border-radius: 15px;
+    }
+}
