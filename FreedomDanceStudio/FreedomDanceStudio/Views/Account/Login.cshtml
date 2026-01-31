@@ -33,7 +33,7 @@
 
 
         <!-- Добавлен id и novalidate -->
-        <form method="post" asp-action="Login" id="loginForm" class="auth-form active" novalidate>
+        <form method="post" asp-action="Login" id="loginForm" class="auth-form active" novalidate asp-antiforgery="true">
             <div class="form-group">
                 <label for="username" class="form-label">Логин</label>
                 <input type="text" id="username" name="username"
