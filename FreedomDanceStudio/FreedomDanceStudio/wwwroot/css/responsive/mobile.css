@@ -85,3 +85,69 @@
         border-radius: 15px;
     }
 }
+
+@media (max-width: 576px) {
+    table.table-striped {
+        font-size: 0.875rem; /* Уменьшаем размер шрифта для читаемости */
+    }
+
+    table th, table td {
+        padding: 8px 5px; /* Уменьшаем внутренние отступы ячеек */
+    }
+
+    /* Делаем таблицу прокручиваемой по горизонтали, если не влезает */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 576px) {
+    td.text-end {
+        text-align: center; /* Центрируем кнопки */
+    }
+
+    td .btn {
+        margin: 2px 0; /* Отступы между кнопками */
+        width: 100%; /* Кнопки занимают всю ширину ячейки */
+    }
+}
+
+@media (max-width: 576px) {
+    .d-flex.justify-content-between {
+        flex-direction: column; /* Кнопка и заголовок друг под другом */
+        align-items: center;
+    }
+
+    h2 {
+        margin-bottom: 1rem;
+    }
+
+    .btn-primary {
+        width: 100%; /* Кнопка занимает всю ширину */
+        margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .pagination {
+        flex-wrap: wrap; /* Элементы переносятся на новые строки */
+        justify-content: center;
+    }
+
+    .page-link {
+        padding: 0.25rem 0.5rem; /* Уменьшаем размеры кнопок */
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 576px) {
+    * {
+        touch-action: manipulation; /* Улучшаем отзывчивость на касания */
+    }
+
+    .btn {
+        min-width: 100px; /* Минимальная ширина кнопок для тапа */
+        padding: 8px 12px;
+    }
+}
