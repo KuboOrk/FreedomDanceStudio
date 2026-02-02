@@ -17,7 +17,8 @@ public class AbonnementSalesController : Controller
 
     #region Конструктор
 
-    public AbonnementSalesController(ApplicationDbContext context, ILogger<AbonnementSalesController> logger,IExpiryAlertService alertService)
+    public AbonnementSalesController(ApplicationDbContext context, 
+        ILogger<AbonnementSalesController> logger,IExpiryAlertService alertService)
     {
         _context = context;
         _logger = logger;
@@ -26,7 +27,7 @@ public class AbonnementSalesController : Controller
 
     #endregion
 
-    #region Список всех продаж абонементов
+    #region Поиск продаж
 
     // GET: /AbonnementSales
     [HttpGet]
@@ -34,6 +35,8 @@ public class AbonnementSalesController : Controller
     public async Task<IActionResult> Index(string search, int page = 1)
     {
         const int pageSize = 10;
+        
+        _logger.LogInformation("Вход в метод Search. Параметры: search='{Search}', page={Page}", search, page);
 
         var sales = _context.AbonnementSales
             .Include(s => s.Client)
@@ -49,15 +52,18 @@ public class AbonnementSalesController : Controller
                  ((s.Client.FirstName != null && s.Client.FirstName.Contains(search)) ||
                   (s.Client.LastName != null && s.Client.LastName.Contains(search)))) ||
                 (s.Service != null && s.Service.Name != null && s.Service.Name.Contains(search)));
+            
+            _logger.LogInformation("Фильтрация по поисковому запросу: '{Search}'", search);
         }
 
         // Пагинация
         var pagedSales = await PagedList<AbonnementSale>.CreateAsync(sales, page, pageSize);
-
+        _logger.LogInformation("Пагинация: текущая страница={CurrentPage}, всего страниц={TotalPages}, размер страницы={PageSize}",
+            pagedSales.CurrentPage, pagedSales.TotalPages, pageSize);
+        
         return View(pagedSales);
     }
-
-    #endregion
+    
     
     [HttpGet]
     [ActionName("Search")]
@@ -67,6 +73,8 @@ public class AbonnementSalesController : Controller
         try
         {
             const int pageSize = 10;
+            
+            _logger.LogInformation("Вход в метод Search. Параметры: search='{Search}', page={Page}", search, page);
     
             IQueryable<AbonnementSale> query = _context.AbonnementSales
                 .Include(s => s.Client)
@@ -81,10 +89,15 @@ public class AbonnementSalesController : Controller
                      ((s.Client.FirstName != null && s.Client.FirstName.ToLower().Contains(search)) ||
                       (s.Client.LastName != null && s.Client.LastName.ToLower().Contains(search)))) ||
                     (s.Service != null && s.Service.Name != null && s.Service.Name.ToLower().Contains(search)));
+                
+                _logger.LogInformation("Фильтрация по поисковому запросу: '{Search}'", search);
             }
     
             // Создаём пагинированный список
             var pagedSales = await PagedList<AbonnementSale>.CreateAsync(query, page, pageSize);
+            
+            _logger.LogInformation("Пагинация выполнена: текущая страница={CurrentPage}, всего страниц={TotalPages}",
+                pagedSales.CurrentPage, pagedSales.TotalPages);
     
             // Явно указываем типы в Select
             var result = pagedSales.Select(sale => new
@@ -100,6 +113,9 @@ public class AbonnementSalesController : Controller
                 VisitCount = sale.Visits.Count(),
                 MaxVisits = sale.MaxVisits
             }).ToList();
+            
+            _logger.LogInformation("Сформирован ответ: {Count} записей, параметры пагинации: CurrentPage={CurrentPage}, TotalPages={TotalPages}",
+                            result.Count, pagedSales.CurrentPage, pagedSales.TotalPages);
     
             return Json(new
             {
@@ -120,6 +136,7 @@ public class AbonnementSalesController : Controller
             return StatusCode(500, new { error = "Внутренняя ошибка сервера", details = ex.Message });
         }
     }
+    #endregion
 
     #region Форма создания новой продажи абонемента
 
@@ -128,6 +145,8 @@ public class AbonnementSalesController : Controller
     [Authorize(Roles = "Admin")]
     public IActionResult Create()
     {
+        _logger.LogInformation("Вход в метод Create (GET)");
+        
         // Инициализируем модель с текущей датой по умолчанию
         var newSale = new AbonnementSale
         {
@@ -165,7 +184,7 @@ public class AbonnementSalesController : Controller
     public async Task<IActionResult> Create(
         [Bind("Id,ClientId,ServiceId,SaleDate,StartDate,EndDate,MaxVisits")] AbonnementSale sale)
     {
-        _logger.LogInformation("POST Create called. Model: ClientId={ClientId}, ServiceId={ServiceId}",
+        _logger.LogInformation("Выполнен запрос POST Create. Модель: ClientId={ClientId}, ServiceId={ServiceId}",
         sale.ClientId, sale.ServiceId);
 
     if (ModelState.IsValid)
@@ -174,6 +193,7 @@ public class AbonnementSalesController : Controller
         if (service == null)
         {
             ModelState.AddModelError("ServiceId", "Выбранная услуга не найдена в системе!");
+            _logger.LogWarning("Услуга не найдена при создании продажи. ServiceId={ServiceId}", sale.ServiceId);
             return View(await ReloadViewData(sale));
         }
 
@@ -181,6 +201,7 @@ public class AbonnementSalesController : Controller
         if (sale.MaxVisits < 0)
         {
             ModelState.AddModelError("MaxVisits", "Количество посещений не может быть отрицательным");
+            _logger.LogWarning("Некорректное значение MaxVisits при создании продажи: {MaxVisits}", sale.MaxVisits);
             return View(await ReloadViewData(sale));
         }
 
@@ -202,6 +223,7 @@ public class AbonnementSalesController : Controller
             if (client == null)
             {
                 ModelState.AddModelError("ClientId", "Клиент не найден!");
+                _logger.LogWarning("Клиент не найден при создании продажи. ClientId={ClientId}", sale.ClientId);
                 return View(await ReloadViewData(sale));
             }
 
@@ -209,15 +231,19 @@ public class AbonnementSalesController : Controller
             {
                 TransactionType = "Income",
                 Amount = service.Price,
-                Description = $"Продажа абонемента: {service.Name} (клиент: {client.FirstName} {client.LastName})", // Подставляем реальные значения
+                Description = $"Продажа абонемента: {service.Name} (клиент: {client.FirstName} {client.LastName})",
                 TransactionDate = sale.SaleDate,
                 AbonnementSaleId = sale.Id,
                 IsManual = false
             };
             _context.FinancialTransactions.Add(incomeTransaction);
             await _context.SaveChangesAsync();
+            
+            _logger.LogInformation("Финансовая транзакция создана для продажи SaleId={SaleId}. Сумма={Amount} ₽",
+                sale.Id, service.Price);
 
             await _alertService.UpdateExpiryAlertForSaleAsync(sale.Id);
+            _logger.LogInformation("Алерты обновлены для SaleId={SaleId}", sale.Id);
             return RedirectToAction(nameof(Index));
         }
         catch (DbUpdateException ex)
@@ -233,7 +259,7 @@ public class AbonnementSalesController : Controller
             return View(await ReloadViewData(sale));
         }
     }
-
+    _logger.LogWarning("Модель невалидна при создании продажи. ModelState={ModelState}", ModelState);
     return View(await ReloadViewData(sale));
     }
 
@@ -274,9 +300,17 @@ public class AbonnementSalesController : Controller
     [Authorize]
     public IActionResult GetServiceDuration(int serviceId)
     {
+        _logger.LogInformation("Вход в метод GetServiceDuration. ServiceId={ServiceId}", serviceId);
+        
         var service = _context.Services.Find(serviceId);
         if (service == null)
+        {
+            _logger.LogWarning("Услуга не найдена. ServiceId={ServiceId}", serviceId);
             return NotFound(new { error = "Услуга не найдена" });
+        }
+        
+        _logger.LogInformation("Услуга найдена. Name={Name}, DurationDays={DurationDays}, Price={Price} ₽",
+            service.Name, service.DurationDays, service.Price);
 
         return Json(new
         {
@@ -295,17 +329,25 @@ public class AbonnementSalesController : Controller
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Edit(int? id)
     {
+        _logger.LogInformation("Вход в метод Edit (GET). Id={Id}", id);
+
         if (id == null || id == 0)
+        {
+            _logger.LogWarning("Некорректный Id при вызове Edit: {Id}", id);
             return NotFound();
+        }
 
         var sale = await _context.AbonnementSales
             .Include(s => s.Client)
             .Include(s => s.Service)
-            .Include(s => s.Visits) // ВАЖНО: загружаем посещения для проверки лимита
+            .Include(s => s.Visits)
             .FirstOrDefaultAsync(s => s.Id == id);
 
         if (sale == null)
+        {
+            _logger.LogWarning("Продажа не найдена при редактировании. Id={Id}", id);
             return NotFound();
+        }
 
         // ПРОВЕРКА: если лимит посещений исчерпан, запрещаем редактирование
         if (sale.MaxVisits > 0 && sale.Visits.Count >= sale.MaxVisits)
@@ -337,182 +379,192 @@ public class AbonnementSalesController : Controller
 
     #region Обработка сохранения изменений
     
-        // POST: /AbonnementSales/Edit/5
-[HttpPost]
-[ValidateAntiForgeryToken]
-[Authorize(Roles = "Admin")]
-public async Task<IActionResult> Edit
-    (int id, [Bind("Id,ClientId,ServiceId,SaleDate,StartDate,EndDate")] AbonnementSale sale)
-{
-    if (id != sale.Id)
-        return NotFound();
-
-    if (ModelState.IsValid)
+    // POST: /AbonnementSales/Edit/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Edit
+        (int id, [Bind("Id,ClientId,ServiceId,SaleDate,StartDate,EndDate")] AbonnementSale sale)
     {
-        try
+        _logger.LogInformation("POST Edit called. Id={Id}, Model: ClientId={ClientId}, ServiceId={ServiceId}",
+            id, sale.ClientId, sale.ServiceId);
+
+        if (id != sale.Id)
         {
-            var existingSale = await _context.AbonnementSales
-                .Include(s => s.FinancialTransactions)
-                .Include(s => s.Visits)
-                .FirstOrDefaultAsync(s => s.Id == id);
+            _logger.LogWarning("Id из маршрута не совпадает с Id модели. RouteId={Id}, " +
+                               "ModelId={ModelId}", id, sale.Id);
+            return NotFound();
+        }
 
-            if (existingSale == null)
-                return NotFound();
-
-            // Валидация MaxVisits
-            if (sale.MaxVisits != existingSale.MaxVisits && sale.MaxVisits < existingSale.Visits.Count)
+        if (ModelState.IsValid)
+        {
+            try
             {
-                ModelState.AddModelError("MaxVisits", 
-                    $"Нельзя установить лимит {sale.MaxVisits} — уже использовано {existingSale.Visits.Count} посещений");
-            }
-            
-            // Если MaxVisits не передан (null), устанавливаем значение из БД
-            if (sale.MaxVisits == 0) // или null, если тип nullable int
-            {
-                var existing = await _context.AbonnementSales.FindAsync(sale.Id);
-                sale.MaxVisits = existing.MaxVisits;
-            }
+                var existingSale = await _context.AbonnementSales
+                    .Include(s => s.FinancialTransactions)
+                    .Include(s => s.Visits)
+                    .FirstOrDefaultAsync(s => s.Id == id);
 
-            var strategy = _context.Database.CreateExecutionStrategy();
-            bool success = false;
-
-            await strategy.ExecuteAsync(async () =>
-            {
-                using var transaction = await _context.Database.BeginTransactionAsync();
-                try
+                if (existingSale == null)
                 {
-                    // Обновляем поля из модели
-                    existingSale.ClientId = sale.ClientId;
-                    existingSale.ServiceId = sale.ServiceId;
-                    existingSale.MaxVisits = sale.MaxVisits;
+                    _logger.LogWarning("Продажа не найдена при сохранении изменений. Id={Id}", id);
+                    return NotFound();
+                }
 
-                    // Конвертируем даты в UTC
-                    existingSale.SaleDate = DateTime.SpecifyKind(sale.SaleDate, DateTimeKind.Utc);
-                    existingSale.StartDate = DateTime.SpecifyKind(sale.StartDate, DateTimeKind.Utc);
-                    existingSale.EndDate = DateTime.SpecifyKind(sale.EndDate, DateTimeKind.Utc);
+                // Валидация MaxVisits
+                if (sale.MaxVisits != existingSale.MaxVisits && sale.MaxVisits < existingSale.Visits.Count)
+                {
+                    ModelState.AddModelError("MaxVisits", 
+                        $"Нельзя установить лимит {sale.MaxVisits} — уже использовано {existingSale.Visits.Count} посещений");
+                }
+                
+                // Если MaxVisits не передан (null), устанавливаем значение из БД
+                if (sale.MaxVisits == 0) // или null, если тип nullable int
+                {
+                    var existing = await _context.AbonnementSales.FindAsync(sale.Id);
+                    sale.MaxVisits = existing.MaxVisits;
+                }
 
-                    var entry = _context.Entry(existingSale);
+                var strategy = _context.Database.CreateExecutionStrategy();
+                bool success = false;
 
-                    // Если услуга изменилась — пересчитываем EndDate
-                    if (entry.Property(e => e.ServiceId).IsModified)
+                await strategy.ExecuteAsync(async () =>
+                {
+                    using var transaction = await _context.Database.BeginTransactionAsync();
+                    try
                     {
-                        var service = await _context.Services.FindAsync(sale.ServiceId);
-                        if (service != null)
+                        // Обновляем поля из модели
+                        existingSale.ClientId = sale.ClientId;
+                        existingSale.ServiceId = sale.ServiceId;
+                        existingSale.MaxVisits = sale.MaxVisits;
+
+                        // Конвертируем даты в UTC
+                        existingSale.SaleDate = DateTime.SpecifyKind(sale.SaleDate, DateTimeKind.Utc);
+                        existingSale.StartDate = DateTime.SpecifyKind(sale.StartDate, DateTimeKind.Utc);
+                        existingSale.EndDate = DateTime.SpecifyKind(sale.EndDate, DateTimeKind.Utc);
+
+                        var entry = _context.Entry(existingSale);
+
+                        // Если услуга изменилась — пересчитываем EndDate
+                        if (entry.Property(e => e.ServiceId).IsModified)
                         {
-                            existingSale.EndDate = DateTime.SpecifyKind(
-                                existingSale.StartDate.AddDays(service.DurationDays),
-                                DateTimeKind.Utc);
+                            var service = await _context.Services.FindAsync(sale.ServiceId);
+                            if (service != null)
+                            {
+                                existingSale.EndDate = DateTime.SpecifyKind(
+                                    existingSale.StartDate.AddDays(service.DurationDays),
+                                    DateTimeKind.Utc);
+                            }
+                            else
+                            {
+                                ModelState.AddModelError("ServiceId", "Выбранная услуга не найдена!");
+                                throw new InvalidOperationException("Услуга не найдена");
+                            }
+                        }
+
+                        // Сохраняем изменения продажи
+                        await _context.SaveChangesAsync();
+
+                        // Синхронизация транзакции дохода — ДОРАБОТАННЫЙ БЛОК
+                        var incomeTransaction = existingSale.FinancialTransactions
+                            .FirstOrDefault(t => t.TransactionType == "Income");
+
+                        if (incomeTransaction != null)
+                        {
+                            // Явно загружаем данные клиента по ID
+                            var client = await _context.Clients.FindAsync(existingSale.ClientId);
+                            if (client == null)
+                            {
+                                ModelState.AddModelError("", "Клиент не найден — невозможно обновить описание транзакции.");
+                                throw new Exception("Клиент не найден");
+                            }
+
+                            var currentService = await _context.Services.FindAsync(existingSale.ServiceId);
+                            if (currentService != null)
+                            {
+                                bool shouldUpdate = false;
+
+                                if (incomeTransaction.TransactionDate != existingSale.SaleDate)
+                                {
+                                    incomeTransaction.TransactionDate = existingSale.SaleDate;
+                                    shouldUpdate = true;
+                                }
+
+                                if (incomeTransaction.Amount != currentService.Price)
+                                {
+                                    incomeTransaction.Amount = currentService.Price;
+                                    shouldUpdate = true;
+                                }
+
+                                // Формируем полное описание с именем клиента
+                                incomeTransaction.Description = $"Продажа абонемента: {currentService.Name} (клиент: {client.FirstName} {client.LastName})";
+                                shouldUpdate = true;
+
+                                if (shouldUpdate)
+                                {
+                                    await _context.SaveChangesAsync();
+                                }
+                            }
                         }
                         else
                         {
-                            ModelState.AddModelError("ServiceId", "Выбранная услуга не найдена!");
-                            throw new InvalidOperationException("Услуга не найдена");
-                        }
-                    }
+                            // Если транзакции нет — создаём новую
+                            var service = await _context.Services.FindAsync(existingSale.ServiceId);
+                            var client = await _context.Clients.FindAsync(existingSale.ClientId); // Загружаем клиента
 
-                    // Сохраняем изменения продажи
-                    await _context.SaveChangesAsync();
-
-                    // Синхронизация транзакции дохода — ДОРАБОТАННЫЙ БЛОК
-                    var incomeTransaction = existingSale.FinancialTransactions
-                        .FirstOrDefault(t => t.TransactionType == "Income");
-
-                    if (incomeTransaction != null)
-                    {
-                        // Явно загружаем данные клиента по ID
-                        var client = await _context.Clients.FindAsync(existingSale.ClientId);
-                        if (client == null)
-                        {
-                            ModelState.AddModelError("", "Клиент не найден — невозможно обновить описание транзакции.");
-                            throw new Exception("Клиент не найден");
-                        }
-
-                        var currentService = await _context.Services.FindAsync(existingSale.ServiceId);
-                        if (currentService != null)
-                        {
-                            bool shouldUpdate = false;
-
-                            if (incomeTransaction.TransactionDate != existingSale.SaleDate)
+                            if (service != null && client != null)
                             {
-                                incomeTransaction.TransactionDate = existingSale.SaleDate;
-                                shouldUpdate = true;
-                            }
-
-                            if (incomeTransaction.Amount != currentService.Price)
-                            {
-                                incomeTransaction.Amount = currentService.Price;
-                                shouldUpdate = true;
-                            }
-
-                            // Формируем полное описание с именем клиента
-                            incomeTransaction.Description = $"Продажа абонемента: {currentService.Name} (клиент: {client.FirstName} {client.LastName})";
-                            shouldUpdate = true;
-
-                            if (shouldUpdate)
-                            {
+                                var newIncomeTransaction = new FinancialTransaction
+                                {
+                                    TransactionType = "Income",
+                                    Amount = service.Price,
+                                    Description = $"Продажа абонемента: {service.Name} (клиент: {client.FirstName} {client.LastName})", // Описание с именем клиента
+                                    TransactionDate = existingSale.SaleDate,
+                                    AbonnementSaleId = existingSale.Id,
+                                    IsManual = false
+                                };
+                                _context.FinancialTransactions.Add(newIncomeTransaction);
                                 await _context.SaveChangesAsync();
                             }
                         }
+
+                        await transaction.CommitAsync();
+                        success = true;
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        // Если транзакции нет — создаём новую
-                        var service = await _context.Services.FindAsync(existingSale.ServiceId);
-                        var client = await _context.Clients.FindAsync(existingSale.ClientId); // Загружаем клиента
-
-                        if (service != null && client != null)
-                        {
-                            var newIncomeTransaction = new FinancialTransaction
-                            {
-                                TransactionType = "Income",
-                                Amount = service.Price,
-                                Description = $"Продажа абонемента: {service.Name} (клиент: {client.FirstName} {client.LastName})", // Описание с именем клиента
-                                TransactionDate = existingSale.SaleDate,
-                                AbonnementSaleId = existingSale.Id,
-                                IsManual = false
-                            };
-                            _context.FinancialTransactions.Add(newIncomeTransaction);
-                            await _context.SaveChangesAsync();
-                        }
+                        await transaction.RollbackAsync();
+                        throw;
                     }
+                });
 
-                    await transaction.CommitAsync();
-                    success = true;
-                }
-                catch (Exception ex)
+                if (success)
                 {
-                    await transaction.RollbackAsync();
-                    throw;
+                    // ДОБАВЛЕН ВЫЗОВ ОБНОВЛЕНИЯ АЛЕРТОВ ПОСЛЕ СОХРАНЕНИЯ ИЗМЕНЕНИЙ
+                    await _alertService.UpdateExpiryAlertForSaleAsync(existingSale.Id);
+
+                    TempData["SuccessMessage"] = "Изменения сохранены успешно";
+                    return RedirectToAction(nameof(Index));
                 }
-            });
-
-            if (success)
-            {
-                // ДОБАВЛЕН ВЫЗОВ ОБНОВЛЕНИЯ АЛЕРТОВ ПОСЛЕ СОХРАНЕНИЯ ИЗМЕНЕНИЙ
-                await _alertService.UpdateExpiryAlertForSaleAsync(existingSale.Id);
-
-                TempData["SuccessMessage"] = "Изменения сохранены успешно";
-                return RedirectToAction(nameof(Index));
+                else
+                {
+                    return View(await ReloadViewData(sale));
+                }
             }
-            else
+            catch (InvalidOperationException ex) when (ex.Message == "Услуга не найдена")
             {
                 return View(await ReloadViewData(sale));
             }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Ошибка при сохранении: {ex.Message}");
+                _logger.LogError("Ошибка при редактировании продажи абонемента ID: {Id}", id);
+                return View(await ReloadViewData(sale));
+            }
         }
-        catch (InvalidOperationException ex) when (ex.Message == "Услуга не найдена")
-        {
-            return View(await ReloadViewData(sale));
-        }
-        catch (Exception ex)
-        {
-            ModelState.AddModelError("", $"Ошибка при сохранении: {ex.Message}");
-            _logger.LogError("Ошибка при редактировании продажи абонемента ID: {Id}", id);
-            return View(await ReloadViewData(sale));
-        }
-    }
 
-    return View(await ReloadViewData(sale));
-}
+        return View(await ReloadViewData(sale));
+    }
 
     #endregion
 
