@@ -9,17 +9,20 @@
         <p class="lead mb-4">Система учёта абонементов танцевальной студии</p>
 
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card bg-primary text-white shadow">
-                <div class="card-body">
-                    <h3 class="card-title">Быстрый старт</h3>
-                    <p class="card-text">Начните работу с системой прямо сейчас!</p>
-                    <a asp-controller="AbonnementSales" asp-action="Create" class="btn btn-light btn-lg">
-                        Создать продажу абонемента
-                    </a>
+        @if (!User.IsInRole("User"))
+        {
+            <div class="col-md-8">
+                <div class="card bg-primary text-white shadow">
+                    <div class="card-body">
+                        <h3 class="card-title">Быстрый старт</h3>
+                        <p class="card-text">Начните работу с системой прямо сейчас!</p>
+                        <a asp-controller="AbonnementSales" asp-action="Create" class="btn btn-light btn-lg">
+                            Создать продажу абонемента
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
+        }
     </div>
     </div>
 </section>
