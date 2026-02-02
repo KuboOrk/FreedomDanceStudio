@@ -67,7 +67,8 @@ public class EmployeeWorkHoursController : Controller
         {
             var errors = ModelState
                 .Where(x => x.Value.Errors.Count > 0)
-                .Select(x => new { x.Key, Errors = string.Join(", ", x.Value.Errors.Select(e => e.ErrorMessage)) })
+                .Select(x => 
+                    new { x.Key, Errors = string.Join(", ", x.Value.Errors.Select(e => e.ErrorMessage)) })
                 .ToList();
             foreach (var error in errors)
             {

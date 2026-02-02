@@ -25,6 +25,8 @@ public class EmployeeSalaryCalculationController : Controller
         return View(calculations);
     }
 
+    #region Обработка расчета ЗП
+
     // GET: /EmployeeSalaryCalculation/Create?employeeId=1
     // Этот метод можно оставить для прямой навигации, но модальное окно его не использует
     [HttpGet]
@@ -134,7 +136,10 @@ public class EmployeeSalaryCalculationController : Controller
                 return RedirectToAction("Index", "Finance");
             }
         }
+        #endregion
 
+    #region  Удаление
+    
     // POST: /EmployeeSalaryCalculation/Delete/5
     [HttpPost]
     [Authorize(Roles = "Admin")]
@@ -155,4 +160,5 @@ public class EmployeeSalaryCalculationController : Controller
         TempData["SuccessMessage"] = "Расчёт и связанная транзакция удалены.";
         return RedirectToAction(nameof(Index));
     }
+    #endregion
 }

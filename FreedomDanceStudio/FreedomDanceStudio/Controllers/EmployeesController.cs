@@ -16,6 +16,8 @@ public class EmployeesController: Controller
         _context = context;
     }
 
+    #region Поиск сотрудников
+    
     // GET: /Employees
     [HttpGet]
     [ActionName("Index")]
@@ -71,7 +73,10 @@ public class EmployeesController: Controller
 
         return Json(result);
     }
+    #endregion
 
+    #region Создание сотрудниов
+    
     // GET: /Employees/Create
     [HttpGet]
     [Authorize(Roles = "Admin")]
@@ -96,7 +101,10 @@ public class EmployeesController: Controller
         }
         return View(employee);
     }
+    #endregion
 
+    #region Редактирование
+    
     // GET: /Employees/Edit/5
     [HttpGet]
     [Authorize(Roles = "Admin")]
@@ -131,7 +139,10 @@ public class EmployeesController: Controller
         }
         return View(employee);
     }
+    #endregion
 
+    #region Удаление
+    
     // POST: /Employees/Delete/5
     [HttpPost]
     [Authorize(Roles = "Admin")]
@@ -170,6 +181,7 @@ public class EmployeesController: Controller
             return RedirectToAction(nameof(Index));
         }
     }
+    #endregion
     
     // GET: /Employees/GetEmployeeData/1
     [HttpGet]

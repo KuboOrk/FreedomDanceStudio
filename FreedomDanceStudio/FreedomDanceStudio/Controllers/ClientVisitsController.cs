@@ -24,82 +24,82 @@ public class ClientVisitsController : Controller
     #region Отметить посещение клиента
 
     // POST: Отметить посещение
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> MarkVisit(int abonnementSaleId)
-{
-    try
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkVisit(int abonnementSaleId)
     {
-        var abonnementSale = await _context.AbonnementSales
-            .Include(s => s.Visits)
-            .FirstOrDefaultAsync(s => s.Id == abonnementSaleId);
-
-        if (abonnementSale == null)
-            return NotFound(new
-            {
-                success = false,
-                message = "Абонемент не найден"
-            });
-
-        // Проверка даты действия абонемента (в UTC)
-        if (abonnementSale.EndDate < DateTime.UtcNow.Date)
-            return BadRequest(new
-            {
-                success = false,
-                message = "Абонемент истёк!"
-            });
-
-        // Проверка лимита посещений
-        var currentVisitCount = abonnementSale.Visits?.Count ?? 0;
-        bool isVisitAllowed = true;
-
-        if (abonnementSale.MaxVisits > 0 && currentVisitCount >= abonnementSale.MaxVisits)
+        try
         {
-            isVisitAllowed = false;
-            return BadRequest(new
+            var abonnementSale = await _context.AbonnementSales
+                .Include(s => s.Visits)
+                .FirstOrDefaultAsync(s => s.Id == abonnementSaleId);
+
+            if (abonnementSale == null)
+                return NotFound(new
+                {
+                    success = false,
+                    message = "Абонемент не найден"
+                });
+
+            // Проверка даты действия абонемента (в UTC)
+            if (abonnementSale.EndDate < DateTime.UtcNow.Date)
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Абонемент истёк!"
+                });
+
+            // Проверка лимита посещений
+            var currentVisitCount = abonnementSale.Visits?.Count ?? 0;
+            bool isVisitAllowed = true;
+
+            if (abonnementSale.MaxVisits > 0 && currentVisitCount >= abonnementSale.MaxVisits)
             {
-                success = false,
-                message = $"Лимит посещений ({abonnementSale.MaxVisits}) исчерпан! Осталось посещений: {abonnementSale.MaxVisits - currentVisitCount}",
-                isVisitAllowed = isVisitAllowed
+                isVisitAllowed = false;
+                return BadRequest(new
+                {
+                    success = false,
+                    message = $"Лимит посещений ({abonnementSale.MaxVisits}) исчерпан! Осталось посещений: {abonnementSale.MaxVisits - currentVisitCount}",
+                    isVisitAllowed = isVisitAllowed
+                });
+            }
+
+            // Создание записи о посещении (UTC)
+            var visit = new ClientVisit
+            {
+                AbonnementSaleId = abonnementSaleId,
+                VisitDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+            };
+
+            _context.ClientVisits.Add(visit);
+            await _context.SaveChangesAsync();
+
+            // ПЕРЕСЧЁТ АЛЕ́РТОВ ДЛЯ ЭТОГО АБОНЕМЕНТА
+            await _alertService.UpdateExpiryAlertForSaleAsync(abonnementSaleId);
+
+            // Получаем все але́рты и фильтруем в памяти
+            var allAlerts = await _alertService.GetAllAbonnementAlertsAsync();
+            var updatedAlert = allAlerts.FirstOrDefault(a => a.AbonnementSaleId == abonnementSaleId);
+
+            return Json(new
+            {
+                success = true,
+                message = "Посещение отмечено!",
+                visitCount = updatedAlert?.UsedVisits ?? (currentVisitCount + 1),
+                remainingVisits = abonnementSale.MaxVisits - (updatedAlert?.UsedVisits ?? (currentVisitCount + 1)),
+                alertData = updatedAlert
             });
         }
-
-        // Создание записи о посещении (UTC)
-        var visit = new ClientVisit
+        catch (Exception ex)
         {
-            AbonnementSaleId = abonnementSaleId,
-            VisitDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
-        };
-
-        _context.ClientVisits.Add(visit);
-        await _context.SaveChangesAsync();
-
-        // ПЕРЕСЧЁТ АЛЕ́РТОВ ДЛЯ ЭТОГО АБОНЕМЕНТА
-        await _alertService.UpdateExpiryAlertForSaleAsync(abonnementSaleId);
-
-        // Получаем все але́рты и фильтруем в памяти
-        var allAlerts = await _alertService.GetAllAbonnementAlertsAsync();
-        var updatedAlert = allAlerts.FirstOrDefault(a => a.AbonnementSaleId == abonnementSaleId);
-
-        return Json(new
-        {
-            success = true,
-            message = "Посещение отмечено!",
-            visitCount = updatedAlert?.UsedVisits ?? (currentVisitCount + 1),
-            remainingVisits = abonnementSale.MaxVisits - (updatedAlert?.UsedVisits ?? (currentVisitCount + 1)),
-            alertData = updatedAlert
-        });
+            _logger.LogError(ex, "Ошибка при отметке посещения для абонемента ID: {AbonnementSaleId}", abonnementSaleId);
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Ошибка сервера"
+            });
+        }
     }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Ошибка при отметке посещения для абонемента ID: {AbonnementSaleId}", abonnementSaleId);
-        return StatusCode(500, new
-        {
-            success = false,
-            message = "Ошибка сервера"
-        });
-    }
-}
 
     #endregion
 
@@ -128,7 +128,6 @@ public async Task<IActionResult> MarkVisit(int abonnementSaleId)
     #endregion
 
     #region Обработка сохранение отредактированное даты
-    // PUT: /ClientVisits/EditVisitDate
     // PUT: /ClientVisits/EditVisitDate
     [HttpPut]
     [ValidateAntiForgeryToken]

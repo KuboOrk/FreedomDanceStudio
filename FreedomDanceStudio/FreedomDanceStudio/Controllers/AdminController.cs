@@ -33,7 +33,9 @@ public class AdminController : Controller
         return View(user);
     }
 
-    // POST: /Admin/EditRole — обработка изменения роли
+    #region Обработчик изменения роли
+    
+    // POST: /Admin/EditRole
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditRole(int id, string newRole)
@@ -54,4 +56,5 @@ public class AdminController : Controller
         TempData["Success"] = $"Роль пользователя {user.Username} изменена на {newRole}";
         return RedirectToAction("Users");
     }
+    #endregion
 }
