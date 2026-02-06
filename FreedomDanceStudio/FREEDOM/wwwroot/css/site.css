@@ -229,3 +229,42 @@ table th, table td {
   opacity: 1; /* Фиксируем полную прозрачность при наведении */
 }
 
+/* Курсивный текст */
+.italic-text {
+  font-style: italic;
+  line-height: 1.6;
+}
+
+/* Стили для списка внутри курсива */
+.italic-text ul {
+  margin-top: 10px;
+  padding-left: 20px;
+}
+
+.italic-text li {
+  margin-bottom: 8px;
+}
+
+/* Базовый стиль для блока анимации */
+.typing-animation {
+  font-family: 'Courier New', monospace;
+  font-size: 1.5rem;
+  line-height: 1.6;
+  margin: 0 0 30px;
+  position: relative;
+
+  /* Градиент для текста */
+  background: linear-gradient(135deg, #667eea 0%, #764ba1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text; /* Стандартное свойство (поддерживается в современных браузерах) */
+}
+
+
+.phrase {
+  display: block;
+  opacity: 1;
+  min-height: 1.2em;
+}
+
+

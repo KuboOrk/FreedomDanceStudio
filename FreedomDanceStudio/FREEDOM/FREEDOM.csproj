@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Folder Include="wwwroot\Content\about\" />
       <Folder Include="wwwroot\Content\promotions\" />
     </ItemGroup>
 
