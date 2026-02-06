@@ -13,3 +13,9 @@
         max-width: 90%;
     }
 }
+
+@media (max-width: 768px) {
+    .slide img {
+        height: 200px; /* Меньшая высота на мобильных */
+    }
+}

@@ -4,19 +4,28 @@
 
 <!-- 1. Главная секция -->
 <div class="section gradient-bg text-white text-center py-5" id="home">
-    <h1 class="display-4 mb-4">Добро пожаловать в FREEDOM!</h1>
-    <p class="lead mb-5">Танцуй с удовольствием!</p>
-    <a href="#directions" class="btn btn-outline-light btn-lg">Узнать о направлениях</a>
-</div>
-
-<!-- 2. Слайдер -->
-<div class="section" id="slider">
-    <div class="container">
-        <div class="slick-slider">
-            <div><img src="~/Content/slider/1.jpg" alt="Слайд 1 - Наши занятия"></div>
-            <div><img src="~/Content/slider/2.jpg" alt="Слайд 2 - Команда студии"></div>
-            <div><img src="~/Content/slider/3.jpg" alt="Слайд 3 - Наши достижения"></div>
-            <div><img src="~/Content/slider/4.jpg" alt="Слайд 4 - Акции и скидки"></div>
+    <div class="container position-relative">
+        <!-- Слайдер (фон) -->
+        <div class="section" id="slider">
+            <div class="container">
+                <div class="simple-slider">
+                    <div class="slide">
+                        <img src="~/Content/slider/4.jpg" alt="Слайд 4">
+                    </div>
+                    <div class="slide">
+                        <img src="~/Content/slider/5.jpg" alt="Слайд 5">
+                    </div>
+                </div>
+                <!-- Кнопки навигации -->
+                <button class="slider-prev">←</button>
+                <button class="slider-next">→</button>
+            </div>
+        </div>
+        <!-- Текстовый контент (на переднем плане) -->
+        <div style="z-index: 1; position: relative;">
+            <h1 class="display-4 mb-4">Добро пожаловать в FREEDOM!</h1>
+            <p class="lead mb-5">Танцуй с удовольствием!</p>
+            <a href="#directions" class="btn btn-outline-light btn-lg">Узнать о направлениях</a>
         </div>
     </div>
 </div>
