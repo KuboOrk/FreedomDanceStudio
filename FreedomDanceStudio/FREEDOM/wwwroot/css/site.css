@@ -25,13 +25,18 @@ body {
 
 .btn-outline-light {
   border-color: var(--primary-color);
-  color: var(--primary-color);
+  color: #0774d8;
+  background: linear-gradient(135deg, #667eea 0%, #764ba1 100%); /* Добавляем градиент вместо однотонного фона */
+  background-clip: border-box; /* Градиент будет включать рамку (border) */
+  -webkit-background-clip: text; /* Для старых браузеров */
 }
 
 .btn-outline-light:hover {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, #667eea 0%, #764ba1 100%); /* Градиент при наведении */
   color: white;
+  background-clip: border-box;
 }
+
 
 .section img {
   border-radius: 8px;
@@ -120,11 +125,13 @@ table th, table td {
 }
 
 .simple-slider {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   overflow: hidden;
-  width: 60%;
-  height: 400px;
-  margin: 0 auto;
+  z-index: 0;
 }
 
 .slide {
@@ -167,7 +174,6 @@ table th, table td {
 
 #slider {
   pointer-events: none;
-  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -180,9 +186,21 @@ table th, table td {
   padding-top: 100px;
 }
 
-
 .slider-prev, .slider-next {
   z-index: 1;
   pointer-events: auto;
 }
+
+.text-container {
+  background-color: rgba(255, 255, 255, 0.8); /* Белый с 20% прозрачностью (0.8) */
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.text-container h1,
+.text-container p {
+  color: black;
+}
+
 
