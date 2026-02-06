@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Folder Include="wwwroot\Content\directions\" />
+      <Folder Include="wwwroot\Content\promotions\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Views\About\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Contacts\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Directions\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Price\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Promotions\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Schedule\Index.cshtml" />
+    </ItemGroup>
+
+</Project>

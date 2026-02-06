@@ -1,0 +1,193 @@
+﻿@{
+    ViewData["Title"] = "Главная";
+}
+
+<!-- 1. Главная секция -->
+<div class="section gradient-bg text-white text-center py-5" id="home">
+    <h1 class="display-4 mb-4">Добро пожаловать в FREEDOM!</h1>
+    <p class="lead mb-5">Танцуй с удовольствием!</p>
+    <a href="#directions" class="btn btn-outline-light btn-lg">Узнать о направлениях</a>
+</div>
+
+<!-- 2. Слайдер -->
+<div class="section" id="slider">
+    <div class="container">
+        <div class="slick-slider">
+            <div><img src="~/Content/slider/1.jpg" alt="Слайд 1 - Наши занятия"></div>
+            <div><img src="~/Content/slider/2.jpg" alt="Слайд 2 - Команда студии"></div>
+            <div><img src="~/Content/slider/3.jpg" alt="Слайд 3 - Наши достижения"></div>
+            <div><img src="~/Content/slider/4.jpg" alt="Слайд 4 - Акции и скидки"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Направления -->
+<div id="directions" class="section">
+    <div class="container">
+        <h2 class="text-center mb-5">Наши направления</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 fade-in">
+                    <img src="~/images/directions/hip-hop.jpg" class="card-img-top" alt="Hip-Hop">
+                    <div class="card-body">
+                        <h5 class="card-title">Hip-Hop</h5>
+                        <p class="card-text">Энергичные движения и свобода самовыражения.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 fade-in">
+                    <img src="~/images/directions/ballet.jpg" class="card-img-top" alt="Балет">
+                    <div class="card-body">
+                        <h5 class="card-title">Балет</h5>
+                        <p class="card-text">Классика и грация в каждом движении.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 fade-in">
+                    <img src="~/images/directions/contemporary.jpg" class="card-img-top" alt="Contemporary">
+                    <div class="card-body">
+                        <h5 class="card-title">Contemporary</h5>
+                        <p class="card-text">Современная хореография и экспрессия.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 4. О студии -->
+<div id="about" class="section bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">О студии</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <p>FREEDOM — это пространство для тех, кто любит танец. У нас:</p>
+                <ul>
+                    <li>Профессиональные преподаватели</li>
+                    <li>Современные залы</li>
+                    <li>Гибкий график занятий</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <img src="~/images/about/studio.jpg" class="w-100" alt="Студия">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 5. Расписание (картинка) -->
+<div id="schedule" class="section">
+    <div class="container">
+        <h2 class="text-center mb-5">Расписание занятий</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <!-- Картинка с расписанием -->
+                <img 
+                    src="~/images/schedule/schedule-poster.jpg"
+                    alt="Расписание занятий студии FREEDOM"
+                    class="img-fluid rounded shadow-sm"
+                />
+                <p class="text-muted text-center mt-3">
+                    Скачайте полное расписание в формате PDF:
+                    <a href="~/files/schedule.pdf" download="расписание-freedom.pdf">Скачать PDF</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 6. Акции (пример блока) -->
+<div id="promotions" class="section bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Актуальные акции</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-primary">Первый урок бесплатно</h5>
+                        <p class="card-text">Запишитесь на любое направление и получите первый урок бесплатно!</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-primary">Скидка 10% на абонемент</h5>
+                        <p class="card-text">При оплате абонемента на 3 месяца — скидка 10%.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-primary">Подарок для детей</h5>
+                        <p class="card-text">При записи ребёнка на занятия — бесплатная футболка с логотипом студии.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 7. Контакты -->
+<div id="contacts" class="section">
+    <div class="container">
+        <h2 class="text-center mb-5">Контакты</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <form>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Имя</label>
+                        <input type="text" class="form-control" id="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Телефон</label>
+                        <input type="tel" class="form-control" id="phone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Сообщение</label>
+                        <textarea class="form-control" id="message" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Отправить</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <h5>Адрес:</h5>
+                        <p>г. Москва, ул. Примерная, д. 123</p>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <h5>Телефон:</h5>
+                        <p><a href="tel:+71234567890">+7 (123) 456-78-90</a></p>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <h5>Email:</h5>
+                        <p><a href="mailto:info@freedomstudio.ru">info@freedomstudio.ru</a></p>
+                    </div>
+                    <div class="col-12">
+                        <h5>Социальные сети:</h5>
+                        <div class="d-flex gap-2">
+                            <a href="https://vk.com/freedom_studio" target="_blank"><i class="bi bi-vk"></i></a>
+                            <a href="https://www.instagram.com/freedom_studio/" target="_blank"><i class="bi bi-instagram"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 8. Карта (опционально, если нужно оставить) -->
+<div id="map" class="section mt-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Как нас найти</h2>
+        <div id="yandex-map" style="height: 400px; border-radius: 12px; overflow: hidden;"></div>
+    </div>
+</div>
