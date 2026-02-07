@@ -345,5 +345,19 @@ table th, table td {
   z-index: 1;
 }
 
+.row.justify-content-center .col-md-10 {
+  display: flex;
+  justify-content: center; /* Горизонтальное центрирование */
+  align-items: center;    /* Вертикальное центрирование (если нужно) */
+}
+
+.price-image {
+  width: 40%;
+  height: auto;
+  max-width: 800px;
+  object-fit: contain;
+  /* Дополнительно: можно добавить отступы */
+  margin: 10px 0;
+}
 
 
