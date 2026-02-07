@@ -482,6 +482,23 @@ table th, table td {
   background-color: #fff3e0; /* светлый оттенок при наведении */
 }
 
+.text-white {
+  color: #fff !important;
+}
+
+.btn-white-outline {
+  color: #fff !important;                   /* Белый текст */
+  border-color: #fff !important;          /* Белая рамка */
+  background-color: transparent !important; /* Прозрачный фон */
+}
+
+.btn-white-outline:hover {
+  color: #333 !important;                  /* Тёмный текст при наведении */
+  background-color: #fff !important;      /* Белый фон при наведении */
+  border-color: #fff !important;         /* Белая рамка при наведении */
+}
+
+
 
 
 
