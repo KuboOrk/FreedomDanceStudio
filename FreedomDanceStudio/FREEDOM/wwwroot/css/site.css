@@ -439,5 +439,12 @@ table th, table td {
   padding: 20px; /* Опционально: отступы внутри блока */
 }
 
+#yandex-map {
+  height: 400px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+
 
 
