@@ -360,4 +360,84 @@ table th, table td {
   margin: 10px 0;
 }
 
+.team-text{
+  font-style:italic;
+  font-size: 24px;
+}
+
+.organizers-text{
+  font-style:italic;
+  font-size: 14px;
+}
+
+/* Общие стили для контактов */
+.contact-list {
+  margin-top: 20px;
+}
+
+.contact-item {
+  margin-bottom: 15px;
+}
+
+.contact-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.contact-detail {
+  line-height: 1.6;
+}
+
+/* Стили для телефона (жирный + подчёркивание) */
+.underline-phone {
+  font-weight: bold;
+  text-decoration: underline;
+  color: #212529;
+}
+
+.underline-phone:hover {
+  text-decoration: none;
+  color: #0056b3; /* Тёмный оттенок при наведении */
+}
+
+/* Стили для иконок соцсетей */
+.social-icons {
+  flex-wrap: wrap;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #eee;
+  color: #666;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.social-link:hover {
+  background-color: #ddd;
+  transform: scale(1.1);
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 576px) {
+  .contact-item {
+    margin-bottom: 10px;
+  }
+
+  .social-icons {
+    justify-content: center;
+  }
+}
+
+#contacts {
+  background-color: #ffffff; /* Белый цвет фона */
+  padding: 20px; /* Опционально: отступы внутри блока */
+}
+
+
 

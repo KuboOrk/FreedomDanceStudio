@@ -85,7 +85,6 @@
 
         <!-- Текстовый контент (поверх изображения) -->
         <div class="about-content">
-            <h2 class="text-center mb-5 fw-bold">О студии</h2>
             <div class="row">
                 <div class="col-md-6">
                     <h2 class="typing-animation">
@@ -122,7 +121,7 @@
 <!-- 5. Прайс (картинка) -->
 <div id="price" class="section">
     <div class="container">
-        <h2 class="text-center mb-5">Цены на занятия</h2>
+        <h2 class="text-center mb-5 fw-bold">Цены на занятия</h2>
         <div class="row justify-content-center">
             <div class="col-md-10">
                 <img 
@@ -140,7 +139,7 @@
 <!-- 6. Расписание (картинка) -->
 <div id="schedule" class="section">
     <div class="container">
-        <h2 class="text-center mb-5">Расписание занятий</h2>
+        <h2 class="text-center mb-5 fw-bold">Расписание занятий</h2>
         <div class="row justify-content-center">
             <div class="col-md-10">
                 <!-- Картинка с расписанием -->
@@ -154,32 +153,69 @@
     </div>
 </div>
 
-<!-- 7. Акции (пример блока) -->
-<div id="promotions" class="section bg-light">
+@* <!-- 7. Акции (пример блока) --> *@
+@* <div id="promotions" class="section bg-light"> *@
+@*     <div class="container"> *@
+@*         <h2 class="text-center mb-5">Актуальные акции</h2> *@
+@*         <div class="row"> *@
+@*             <div class="col-md-4 mb-4"> *@
+@*                 <div class="card h-100"> *@
+@*                     <div class="card-body text-center"> *@
+@*                         <h5 class="card-title text-primary">Первый урок бесплатно</h5> *@
+@*                         <p class="card-text">Запишитесь на любое направление и получите первый урок бесплатно!</p> *@
+@*                     </div> *@
+@*                 </div> *@
+@*             </div> *@
+@*             <div class="col-md-4 mb-4"> *@
+@*                 <div class="card h-100"> *@
+@*                     <div class="card-body text-center"> *@
+@*                         <h5 class="card-title text-primary">Скидка 10% на абонемент</h5> *@
+@*                         <p class="card-text">При оплате абонемента на 3 месяца — скидка 10%.</p> *@
+@*                     </div> *@
+@*                 </div> *@
+@*             </div> *@
+@*             <div class="col-md-4 mb-4"> *@
+@*                 <div class="card h-100"> *@
+@*                     <div class="card-body text-center"> *@
+@*                         <h5 class="card-title text-primary">Подарок для детей</h5> *@
+@*                         <p class="card-text">При записи ребёнка на занятия — бесплатная футболка с логотипом студии.</p> *@
+@*                     </div> *@
+@*                 </div> *@
+@*             </div> *@
+@*         </div> *@
+@*     </div> *@
+@* </div> *@
+
+<!-- 7. Команда -->
+<div id="team" class="section">
     <div class="container">
-        <h2 class="text-center mb-5">Актуальные акции</h2>
+        <h1 class="text-center mb-5 fw-bold">Наша команда</h1>
+        <p class="text-center mb-5 team-text">Каждый наш педагог — профессионал своего дела</p>
         <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <h5 class="card-title text-primary">Первый урок бесплатно</h5>
-                        <p class="card-text">Запишитесь на любое направление и получите первый урок бесплатно!</p>
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 fade-in text-center">
+                    <img src="~/Content/team/Фадеева Екатерина.png" class="card-img-top" alt="Фадеева Екатерина">
+                    <div class="card-body">
+                        <h5 class="card-title">BELLYDANCE</h5>
+                        <p class="card-text fw-bold">Фадеева Екатерина</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <h5 class="card-title text-primary">Скидка 10% на абонемент</h5>
-                        <p class="card-text">При оплате абонемента на 3 месяца — скидка 10%.</p>
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 fade-in text-center">
+                    <img src="~/Content/team/Орехова Линда.jpg" class="card-img-top" alt="Орехова Линда">
+                    <div class="card-body">
+                        <h5 class="card-title">Bachata lady style</h5>
+                        <p class="card-text fw-bold">Орехова Линда</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <h5 class="card-title text-primary">Подарок для детей</h5>
-                        <p class="card-text">При записи ребёнка на занятия — бесплатная футболка с логотипом студии.</p>
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 fade-in text-center">
+                    <img src="~/Content/team/Анисимова Дарья.jpg" class="card-img-top" alt="Анисимова Дарья">
+                    <div class="card-body">
+                        <h5 class="card-title">Современные танцы</h5>
+                        <p class="card-text fw-bold">Анисимова Дарья</p>
                     </div>
                 </div>
             </div>
@@ -187,51 +223,53 @@
     </div>
 </div>
 
-<!-- 8. Контакты -->
+<!-- 8. Организаторы-->
+<div id="organizers" class="section">
+    <div class="container">
+        <h1 class="text-center mb-5 fw-bold">Организаторы процесса</h1>
+        <div class="row justify-content-center">
+            <div class="col-md-4 mb-4 text-center">
+                <img src="~/Content/organizers/Быков Владимир.jpg" class="img-fluid rounded shadow-sm mb-3" alt="Быков Владимир">
+                <h5><strong>Быков Владимир</strong></h5>
+                <p class="organizers-text">Директор танцевальной студии FREEDOM</p>
+            </div>
+            <div class="col-md-4 mb-4 text-center">
+                <img src="~/Content/organizers/Фадеева Екатерина.jpg" class="img-fluid rounded shadow-sm mb-3" alt="Фадеева Екатерина">
+                <h5><strong>Фадеева Екатерина</strong></h5>
+                <p class="organizers-text">Директор танцевальной студии FREEDOM, а также педагог по восточным танцам</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 9. Контакты -->
 <div id="contacts" class="section">
     <div class="container">
-        <h2 class="text-center mb-5">Контакты</h2>
+        <h2 class="text-center mb-5 fw-bold">Контакты</h2>
         <div class="row">
             <div class="col-md-6">
-                <form>
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Имя</label>
-                        <input type="text" class="form-control" id="name" required>
+                <div class="contact-list">
+                    <div class="contact-item">
+                        <h5 class="contact-title">Адрес:</h5>
+                        <p class="contact-detail">г. Казань, ул. Патриса Лумумбы, д. 4 (здание ДОСААФ),<br> 5 этаж, кабинет 502</p>
                     </div>
-                    <div class="mb-3">
-                        <label for="phone" class="form-label">Телефон</label>
-                        <input type="tel" class="form-control" id="phone" required>
+                    <div class="contact-item mb-4">
+                        <h5 class="contact-title">Телефон:</h5>
+                        <p class="contact-phone">
+                            <a href="tel:+79393661167" class="underline-phone">+7 (939) 366-11-67</a>
+                        </p>
                     </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email">
-                    </div>
-                    <div class="mb-3">
-                        <label for="message" class="form-label">Сообщение</label>
-                        <textarea class="form-control" id="message" rows="5" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Отправить</button>
-                </form>
-            </div>
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-12 mb-3">
-                        <h5>Адрес:</h5>
-                        <p>г. Москва, ул. Примерная, д. 123</p>
-                    </div>
-                    <div class="col-12 mb-3">
-                        <h5>Телефон:</h5>
-                        <p><a href="tel:+71234567890">+7 (123) 456-78-90</a></p>
-                    </div>
-                    <div class="col-12 mb-3">
-                        <h5>Email:</h5>
-                        <p><a href="mailto:info@freedomstudio.ru">info@freedomstudio.ru</a></p>
-                    </div>
-                    <div class="col-12">
-                        <h5>Социальные сети:</h5>
-                        <div class="d-flex gap-2">
-                            <a href="https://vk.com/freedom_studio" target="_blank"><i class="bi bi-vk"></i></a>
-                            <a href="https://www.instagram.com/freedom_studio/" target="_blank"><i class="bi bi-instagram"></i></a>
+                    <div class="contact-item">
+                        <h5 class="contact-title">Социальные сети:</h5>
+                        <div class="social-icons d-flex gap-2">
+                            <a href="https://vk.com/freedomdancestidio" target="_blank" class="social-link">
+                                <i class="fa-brands fa-vk"></i>
+                            </a>
+                            <a href="https://vk.com/away.php?to=https%3A%2F%2Fwww.instagram.com%2Ffreedom_dance_studio_kzn&utf=1" 
+                               target="_blank" class="social-link">
+                                <i class="fa-brands fa-instagram"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -239,6 +277,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- 9. Карта (опционально, если нужно оставить) -->
 <div id="map" class="section mt-5">
