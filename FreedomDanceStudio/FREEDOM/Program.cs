@@ -2,6 +2,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
+builder.Services
+    .AddHealthChecks();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -23,5 +26,7 @@ app.MapControllerRoute(
 // Дополнительные маршруты: перенаправляем на действия контроллера
 app.MapGet("/rules", () => Results.Redirect("/Home/Rules"));
 app.MapGet("/offer", () => Results.Redirect("/Home/Offer"));
+
+app.UseHealthChecks("/health");
 
 app.Run();
