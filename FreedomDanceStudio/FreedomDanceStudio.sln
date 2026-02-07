@@ -9,11 +9,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_ci-cd", "_ci-cd", "{2DB92B
 		..\.gitignore = ..\.gitignore
 		..\Dockerfile = ..\Dockerfile
 		..\README.md = ..\README.md
+		..\Landing.dockerfile = ..\Landing.dockerfile
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github-workflows", "github-workflows", "{17F18630-92D3-48D3-AEF0-F89EEA7556F1}"
 	ProjectSection(SolutionItems) = preProject
 		..\.github\workflows\deploy.yml = ..\.github\workflows\deploy.yml
+		..\.github\workflows\deploy.landing.yml = ..\.github\workflows\deploy.landing.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy", "deploy", "{560407A1-6CFA-4772-9406-586D1F844124}"

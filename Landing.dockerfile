@@ -6,15 +6,15 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["FreedomDanceStudio/FreedomDanceStudio/FreedomDanceStudio.csproj", "FreedomDanceStudio/FreedomDanceStudio/"]
-RUN dotnet restore "FreedomDanceStudio/FreedomDanceStudio/FreedomDanceStudio.csproj"
+COPY ["FreedomDanceStudio/FREEDOM/FREEDOM.csproj", "FreedomDanceStudio/FREEDOM/"]
+RUN dotnet restore "FreedomDanceStudio/FREEDOM/FREEDOM.csproj"
 COPY . .
-WORKDIR "/src/FreedomDanceStudio/FreedomDanceStudio"
-RUN dotnet build "./FreedomDanceStudio.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/FreedomDanceStudio/FREEDOM"
+RUN dotnet build "./FREEDOM.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./FreedomDanceStudio.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./FREEDOM.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 USER $APP_UID
@@ -22,4 +22,4 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 HEALTHCHECK --interval=10m --timeout=10s --start-period=10s \
 CMD curl -f http://localhost:8080/health || exit 1
-ENTRYPOINT ["dotnet", "FreedomDanceStudio.dll"]
+ENTRYPOINT ["dotnet", "FREEDOM.dll"]
