@@ -233,6 +233,7 @@ table th, table td {
 .italic-text {
   font-style: italic;
   line-height: 1.6;
+  color: white !important;
 }
 
 /* Стили для списка внутри курсива */
@@ -243,28 +244,106 @@ table th, table td {
 
 .italic-text li {
   margin-bottom: 8px;
+  color: white !important;
+}
+
+.italic-text, .typing-animation {
+  margin-left: 0 !important; /* Убираем автоматические отступы */
+  padding-left: 0 !important; /* Убираем внутренние отступы */
 }
 
 /* Базовый стиль для блока анимации */
 .typing-animation {
   font-family: 'Courier New', monospace;
-  font-size: 1.5rem;
+  font-size: 40px;
   line-height: 1.6;
   margin: 0 0 30px;
   position: relative;
 
   /* Градиент для текста */
+  color: #9370DB;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   background: linear-gradient(135deg, #667eea 0%, #764ba1 100%);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text; /* Стандартное свойство (поддерживается в современных браузерах) */
+
+  /* Ключевые исправления */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  display: block;
+  min-height: 4.4rem; 
 }
 
 
 .phrase {
-  display: block;
+  display: inline;
   opacity: 1;
-  min-height: 1.2em;
+  vertical-align: top;
+
+  /* Жирный шрифт и повышенная яркость для фраз */
+  font-weight: bold;
+  filter: brightness(1.2); /* Ярче на 20% */
 }
+
+/* Контейнер секции с относительным позиционированием */
+#about .container.position-relative {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Блок с фоновым изображением */
+.about-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.about-background img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Текстовый контент поверх изображения */
+.about-content {
+  position: relative;
+  z-index: 2;
+  padding: 50px 0;
+  color: white !important;
+}
+
+/* 2. Выравнивание текста по левому краю */
+.about-content .col-md-6 {
+  text-align: left; /* Выравнивание по левому краю */
+  padding-left: 20px;
+}
+
+/* Для мобильных устройств: текст занимает всю ширину */
+@media (max-width: 767px) {
+  .about-content .col-md-6 {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+}
+
+/* Дополнительно: затемнение фона для лучшей читаемости текста */
+.about-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3); /* Полупрозрачное затемнение */
+  z-index: 1;
+}
+
 
 
