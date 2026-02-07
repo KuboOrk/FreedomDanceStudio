@@ -440,10 +440,26 @@ table th, table td {
 }
 
 #yandex-map {
-  height: 400px;
+  height: 80%;
   border-radius: 12px;
   overflow: hidden;
 }
+
+.row {
+  display: flex;
+  align-items: stretch; /* Растягивает колонки на одинаковую высоту */
+}
+
+.col-md-6 {
+  flex: 1; /* Равномерно распределяет ширину */
+  overflow: auto; /* Если содержимое не помещается — появится скролл */
+}
+
+#contacts, #map {
+  padding: 1rem; /* Добавляем отступы внутри блоков для эстетики (опционально) */
+  height: 100%; /* Форсируем заполнение всей доступной высоты */
+}
+
 
 
 
