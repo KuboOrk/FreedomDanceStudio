@@ -23,3 +23,22 @@ function initScrollAnimations() {
 
     cards.forEach(card => cardObserver.observe(card));
 }
+
+// Кнопка "Наверх"
+document.getElementById('scrollToTop').addEventListener('click', function () {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth' // плавная прокрутка
+    });
+});
+
+// Показываем кнопку при прокрутке
+window.addEventListener('scroll', function () {
+    const scrollToTop = document.getElementById('scrollToTop');
+    if (window.pageYOffset > 300) {
+        scrollToTop.style.display = 'block';
+    } else {
+        scrollToTop.style.display = 'none';
+    }
+});
+
